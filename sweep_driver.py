@@ -69,6 +69,11 @@ def main():
         for task in TASKS:
             for method in METHODS:
                 sweep(task, method)
+    if "--no-summary" in sys.argv:
+        # Several sweeps of the same tag running side by side would all write
+        # the summary file below and the last one would win; the caller runs
+        # one summary pass (static_summary.py) once every sweep is in.
+        return
 
     rows = []
     # The methods actually asked for, plus the three the summary has always
@@ -88,8 +93,12 @@ def main():
                          "score": s[best_ep][0], "ci95": s[best_ep][1],
                          "evaluated": sorted(s)})
 
-    out_json = ROOT / "outputs" / f"robomimic_best_ckpt{TAG}.json"
-    out_csv = ROOT / "outputs" / f"robomimic_best_ckpt{TAG}.csv"
+    # The summary has always been the can/lift/square table under this name.
+    # A run on other tasks gets its own file, so that sweeping transport does
+    # not overwrite the table every existing result was read from.
+    suffix = "" if set(TASKS) == {"can", "lift", "square"} else "_" + "_".join(TASKS)
+    out_json = ROOT / "outputs" / f"robomimic_best_ckpt{TAG}{suffix}.json"
+    out_csv = ROOT / "outputs" / f"robomimic_best_ckpt{TAG}{suffix}.csv"
     json.dump(rows, open(out_json, "w"), indent=2)
     with open(out_csv, "w") as fh:
         fh.write("task,method,best_ckpt,score,ci95\n")
