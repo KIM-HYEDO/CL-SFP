@@ -1,0 +1,26 @@
+# Experiment products: ~30G of checkpoints and eval JSON. The results are the
+# point of the project but they are not source, and they are regenerable from
+# the code plus the datasets.
+outputs/
+logs/
+
+# Datasets, downloaded from robomimic / diffusion-policy. See HANDOFF.md for
+# the URLs -- and for why the robomimic ones must come from the legacy path,
+# not the official download script.
+env/*/data/
+env/robomimic/_dl/
+
+# Environment and build artefacts
+.venv/
+__pycache__/
+*.pyc
+cl_sfp.egg-info/
+
+# Migration scratch (checksums, manifests)
+migrate/
+
+# Agent tooling state
+algo/.omc/
+
+# Per-machine Claude Code permissions, not shared
+.claude/settings.local.json

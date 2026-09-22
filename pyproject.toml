@@ -1,0 +1,74 @@
+[project]
+name = "cl-sfp"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Siddharth Ancha", email = "sancha@mit.edu"},
+    {name = "Sunshine Jiang", email = "sunsh16e@mit.edu"},
+]
+dependencies = [
+    # =========================================================================
+    # Debugging, interactive Python and Jupyter notebooks
+    # =========================================================================
+    "ipdb",
+    "ipykernel",
+    "ipywidgets",
+    "pyreadline3",
+    "tqdm",
+    "jupyterlab",
+    "jupyter-book",
+    # =========================================================================
+    # Main dependencies
+    # =========================================================================
+    "mediapy",
+    "drake",
+    "matplotlib",
+    "termcolor",
+    "scipy",
+    "scikit-image",
+    "scikit-video",
+    "torch",
+    "torchvision",
+    "torchdyn",
+    "diffusers==0.11.1",
+    "zarr<3",
+    "numcodecs<0.16",
+    "pygame",
+    "pymunk<7",
+    "gdown",
+    "gym",
+    "shapely",
+    "imageio>=2.37.0",
+    "imageio-ffmpeg>=0.6.0",
+    "mujoco>=3.8.1",
+    "robosuite==1.4.1",
+    "robomimic>=0.3.0",
+    "iopath>=0.1.10",
+    "fvcore>=0.1.5.post20221221",
+    "opencv-python-headless>=5.0.0.93",
+]
+requires-python = ">=3.10,<3.12"
+readme = "README.md"
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["streaming_flow_policy", "jupyviz", "utils"]
+
+[tool.setuptools.package-data]
+exclude = [
+    "website",
+    "notebooks",
+]
+
+[tool.uv.sources]
+robomimic = { git = "https://github.com/ARISE-Initiative/robomimic.git" }
+torch = { index = "pytorch-cu128" }
+torchvision = { index = "pytorch-cu128" }
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
