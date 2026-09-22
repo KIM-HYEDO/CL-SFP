@@ -220,9 +220,57 @@ robomimic env는 `ignore_done: true`라 **모든 에피소드가 예산을 끝�
 **0.0만** (정적 ckpt 스윕). 두 태스크를 GPU 0/1에 나눠 병렬 실행 중이고,
 로그는 `logs/transport_*.log`, `logs/tool_hang_*.log`.
 
-결과 집계는 `static_summary.py` (신규). `final_summary.py` / `paired_test.py`는
+결과 집계는 `static_summary.py` (신규). 새 태스크 붙일 때 사전 점검은
+`check_dataset_env.py <task>`, 학습 후 적합도 확인은 `check_train_fit.py <task> <ep>`. `final_summary.py` / `paired_test.py`는
 외란 커브가 있다고 가정하므로 이 결과를 읽지 못한다 — 나중에 외란을 붙이면
 그때 `robomimic_sources()` / `ROBUST_BAND` / `MID_BAND`에 새 태스크를 추가해야 한다.
+
+### 첫 결과와 "버그 아닌가" 진단 (2026-09-22)
+
+첫 시드의 정적 스윕이 낮게 나왔다 — `tool_hang/sfp` 최고 0.26(ep500), `tool_hang/cl_sfp`
+0.09, `transport/sfp` ep100–300에서 0.35–0.41. 문헌(Diffusion Policy: tool_hang ~0.7–0.9,
+transport ~0.9–1.0)에 크게 못 미쳐서 데이터셋·학습·추론 배관을 전부 점검했다.
+`check_dataset_env.py`와 `check_train_fit.py`가 그 검사이고, 새 태스크를 붙일 때마다 먼저 돌릴 것.
+
+| 검사 | can (대조) | square | tool_hang | transport |
+|---|---|---|---|---|
+| 기록된 데모 성공률 | 100% | — | 100% | 100% |
+| 정규화 상수 차원 | 없음 | — | 없음 | 없음 |
+| 초기 상태 리셋 오차 | 1e-7 | — | 3e-7 | 1e-7 |
+| **1스텝 물리 오차** (eef, 중앙값) | 3.6e-4 m | — | 9.4e-5 m | 1.8e-4 m |
+| 데모 액션 open-loop 리플레이 | 100% | — | 0% | 33% |
+| **학습 적합도** model/stay 오차비 | 0.46 | 0.59 | 0.46 | 0.52 |
+
+**결론: 버그 증거 없음.**
+- 물리는 일치한다. mujoco 3.8.1 + robosuite 1.4.1이 v0.1 데이터셋의 전이를 세 태스크 모두
+  서브밀리미터로 재현한다(tool_hang이 가장 정확). "구버전 데이터셋 = MuJoCo 2.0 물리" 우려는 기각.
+- 학습은 됐다. 데이터셋 obs로 flow를 8스텝 적분했을 때 기록 액션에 맞아가는 정도가
+  0.94짜리 can과 0.26짜리 tool_hang에서 **같다**. 네트워크는 두 태스크를 똑같이 잘 맞춘다.
+- open-loop 리플레이 0%는 버그 지표가 아니다. 1e-4 m/스텝이 500스텝 누적되면 삽입 허용 오차
+  (수 mm)를 넘는다. 폐루프 정책은 매 스텝 보정하므로 무관하고, robomimic 자체 재생 도구도
+  같은 이유로 액션 아닌 **상태**를 재생한다.
+
+**낮은 이유로 남는 것** (전부 method 간 비교에는 동일하게 걸리므로 상대 비교는 유효):
+1. 태스크 난이도 × 모델 한계 — robomimic 논문에서 tool_hang은 history 없는 BC가 무너지고
+   BC-RNN만 살아남는 태스크. 이 SFP는 `obs_horizon=2`, RNN 없음. square에서도 DP보다 0.2 낮았다.
+2. 예산 700이 빡빡함 — tool_hang 데모의 18%가 560스텝 초과, 3%가 700 초과. 사람보다 느린
+   정책은 성공 직전에 잘린다 (robomimic 공식 horizon도 700이라 참조 수치도 같은 조건).
+3. 하이퍼파라미터가 can/square용 그대로.
+
+절대 수치를 문헌 옆에 놓지 말 것. 250스텝 프로토콜과 같은 맥락이다.
+
+### 병렬 평가와 pids 제한 (2026-09-22)
+
+평가는 MuJoCo 단일 스레드에 묶여 GPU를 5%만 쓴다. `sweep_driver`를 (method, seed) 9조합
+순차로 돌리면 transport가 ~40h라, `eval_newtasks_parallel.sh`로 9개를 동시에 띄운다(~5h).
+
+그때 드러난 함정: 이 컨테이너는 **pids 4096 제한**이고, 128코어라 OpenMP 풀(numpy·torch·
+MuJoCo)이 프로세스마다 스레드 130~380개를 만든다. 9개 이상 동시에 뜨면 한도를 넘고, 실패 양상이
+조용하다 — MjModel 컴파일에서 `Caught an unknown exception!` 또는 `libgomp: Thread creation
+failed`, 혹은 **에러 없이 futex 데드락**(시작 시에도, 작업을 다 끝낸 뒤 종료 단계에서도).
+`OMP_NUM_THREADS=1 MKL_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1`로 프로세스당 ~20스레드가 되고
+(pids 2027 → 193), 평가는 단일 스레드 시뮬 + batch-1 추론이라 손실이 없다. 런처가 이를
+설정하고 기동 간격 5초·실패 시 1회 재시도를 넣는다. **이 env 없이 병렬로 띄우지 말 것.**
 
 ### 미결
 
