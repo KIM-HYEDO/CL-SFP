@@ -1,0 +1,120 @@
+{
+  "rollout": "cl_sfp",
+  "trained_by": "cl_sfp",
+  "method": "cl_sfp",
+  "tag": "",
+  "task": "pusht",
+  "seeds": 100,
+  "action_horizon": 8,
+  "pred_horizon": 16,
+  "obs_horizon": 2,
+  "obs_dim": 5,
+  "action_dim": 2,
+  "eval_action_horizon": 8,
+  "perturbs": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0,
+    1.2,
+    1.4,
+    1.6,
+    1.8,
+    2.0
+  ],
+  "updated": "2026-09-11T10:52:41",
+  "args": {
+    "task": "pusht",
+    "mode": "eval",
+    "epochs": 1000,
+    "seeds": 100,
+    "ckpt": "1000",
+    "perturbs": "0.0-2.0",
+    "seed": 0,
+    "perturb": 0.0,
+    "out": null,
+    "dataset": null,
+    "batch_size": 1024,
+    "num_workers": 1,
+    "device": "cuda",
+    "smoke": false,
+    "train_seed": 0,
+    "tag": "",
+    "ckpt_path": null,
+    "action_horizon": 8,
+    "redo": false,
+    "out_json": null
+  },
+  "kind": "perturb_curve",
+  "ckpt": 1000,
+  "table": [
+    {
+      "perturb": 0.0,
+      "score": 0.9198053775068153,
+      "ci95": 0.04383581509637071,
+      "n": 100
+    },
+    {
+      "perturb": 0.2,
+      "score": 0.9257329843238984,
+      "ci95": 0.04234657164411953,
+      "n": 100
+    },
+    {
+      "perturb": 0.4,
+      "score": 0.9180266975088827,
+      "ci95": 0.03687797886448414,
+      "n": 100
+    },
+    {
+      "perturb": 0.6,
+      "score": 0.8870316017691323,
+      "ci95": 0.044509178371395126,
+      "n": 100
+    },
+    {
+      "perturb": 0.8,
+      "score": 0.8961644705123787,
+      "ci95": 0.041441018708478716,
+      "n": 100
+    },
+    {
+      "perturb": 1.0,
+      "score": 0.867827669384478,
+      "ci95": 0.04792597321940565,
+      "n": 100
+    },
+    {
+      "perturb": 1.2,
+      "score": 0.8141309049970539,
+      "ci95": 0.05288913788060005,
+      "n": 100
+    },
+    {
+      "perturb": 1.4,
+      "score": 0.7475606994759559,
+      "ci95": 0.057806809242558946,
+      "n": 100
+    },
+    {
+      "perturb": 1.6,
+      "score": 0.6415282740250929,
+      "ci95": 0.0625472818087416,
+      "n": 100
+    },
+    {
+      "perturb": 1.8,
+      "score": 0.540827497592492,
+      "ci95": 0.06255063746811078,
+      "n": 100
+    },
+    {
+      "perturb": 2.0,
+      "score": 0.5248719851221737,
+      "ci95": 0.05981271730580006,
+      "n": 100
+    }
+  ]
+}

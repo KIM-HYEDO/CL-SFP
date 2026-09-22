@@ -1,0 +1,57 @@
+{
+  "rollout": "sfp",
+  "trained_by": "sfp",
+  "method": "sfp",
+  "tag": "_seed1",
+  "task": "square",
+  "seeds": 100,
+  "action_horizon": 8,
+  "pred_horizon": 16,
+  "obs_horizon": 2,
+  "obs_dim": 23,
+  "action_dim": 7,
+  "eval_action_horizon": 8,
+  "perturbs": [
+    0.0,
+    0.0001,
+    0.00025,
+    0.0003,
+    0.0005,
+    0.00075,
+    0.001,
+    0.00125,
+    0.0015
+  ],
+  "updated": "2026-09-15T00:17:44",
+  "args": {
+    "task": "square",
+    "mode": "eval",
+    "epochs": 1000,
+    "seeds": 100,
+    "ckpt": "400",
+    "perturbs": "0.0,0.0001,0.00025,0.0003,0.0005,0.00075,0.001,0.00125,0.0015",
+    "seed": 0,
+    "perturb": 0.0,
+    "out": null,
+    "dataset": null,
+    "batch_size": 1024,
+    "num_workers": 1,
+    "device": "cuda",
+    "smoke": false,
+    "train_seed": 0,
+    "tag": "_seed1",
+    "ckpt_path": null,
+    "action_horizon": 8,
+    "redo": false,
+    "out_json": "outputs/square/sfp_seed1/eval/perturb_s100.json"
+  },
+  "kind": "ckpt_sweep",
+  "metric": "mean over perturbs [0.0, 0.0001, 0.00025, 0.0003, 0.0005, 0.00075, 0.001, 0.00125, 0.0015]",
+  "table": [
+    {
+      "ckpt": 400,
+      "score": 0.4255555555555555,
+      "ci95": 0.07914831978148582
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "rollout": "cl_sfp_excess_g3",
+  "trained_by": "cl_sfp",
+  "method": "cl_sfp_excess_g3",
+  "tag": "_seed2",
+  "task": "pusht",
+  "seeds": 100,
+  "action_horizon": 8,
+  "pred_horizon": 16,
+  "obs_horizon": 2,
+  "obs_dim": 5,
+  "action_dim": 2,
+  "gate": {
+    "kind": "excess",
+    "gamma": 3.0,
+    "tau": 0.0,
+    "tfix": 0.0,
+    "snap": true
+  },
+  "eval_action_horizon": 8,
+  "perturbs": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0,
+    1.2,
+    1.4,
+    1.6,
+    1.8,
+    2.0,
+    2.4,
+    2.8
+  ],
+  "updated": "2026-09-14T19:37:16",
+  "args": {
+    "task": "pusht",
+    "mode": "eval",
+    "gate": "excess",
+    "tfix": 0.0,
+    "no_snap": false,
+    "gamma": 3.0,
+    "tau": 0.0,
+    "calib": "soft:1,soft:10",
+    "seed_from": 100,
+    "seeds": 100,
+    "ckpt": "1000",
+    "perturbs": "0.0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.4,2.8",
+    "seed": 0,
+    "perturb": 0.0,
+    "out": null,
+    "dataset": null,
+    "device": "cuda",
+    "smoke": false,
+    "tag": "_seed2",
+    "redo": false,
+    "out_json": "outputs/pusht/cl_sfp_excess_g3_seed2/eval/perturb_rand_s100.json",
+    "action_horizon": 8
+  },
+  "kind": "perturb_curve",
+  "ckpt": 1000,
+  "table": [
+    {
+      "perturb": 0.0,
+      "score": 0.8296260046775982,
+      "ci95": 0.06287562421003529,
+      "n": 100
+    },
+    {
+      "perturb": 0.2,
+      "score": 0.8291806280584346,
+      "ci95": 0.06258480670719782,
+      "n": 100
+    },
+    {
+      "perturb": 0.4,
+      "score": 0.8348399330808374,
+      "ci95": 0.05813489028001933,
+      "n": 100
+    },
+    {
+      "perturb": 0.6,
+      "score": 0.8503906683105328,
+      "ci95": 0.04731227429646843,
+      "n": 100
+    },
+    {
+      "perturb": 0.8,
+      "score": 0.8237599890871364,
+      "ci95": 0.04479921894532698,
+      "n": 100
+    },
+    {
+      "perturb": 1.0,
+      "score": 0.7364493616551456,
+      "ci95": 0.051939874146019166,
+      "n": 100
+    },
+    {
+      "perturb": 1.2,
+      "score": 0.7180997408238325,
+      "ci95": 0.05035943137575908,
+      "n": 100
+    },
+    {
+      "perturb": 1.4,
+      "score": 0.6344084497154485,
+      "ci95": 0.05356238859201279,
+      "n": 100
+    },
+    {
+      "perturb": 1.6,
+      "score": 0.6572488651964948,
+      "ci95": 0.0551273678061181,
+      "n": 100
+    },
+    {
+      "perturb": 1.8,
+      "score": 0.5584761315990034,
+      "ci95": 0.05947406800705893,
+      "n": 100
+    },
+    {
+      "perturb": 2.0,
+      "score": 0.5529128880645804,
+      "ci95": 0.057151134546519294,
+      "n": 100
+    },
+    {
+      "perturb": 2.4,
+      "score": 0.49965473154825096,
+      "ci95": 0.05733959671588274,
+      "n": 100
+    },
+    {
+      "perturb": 2.8,
+      "score": 0.45455186682570603,
+      "ci95": 0.05877529576281981,
+      "n": 100
+    }
+  ]
+}

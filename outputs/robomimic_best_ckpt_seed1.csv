@@ -1,0 +1,10 @@
+task,method,best_ckpt,score,ci95
+can,sfp,300,0.9400,0.0468
+can,cl_sfp,200,0.9300,0.0503
+can,sfp_1step,500,0.8800,0.0640
+lift,sfp,100,1.0000,0.0000
+lift,cl_sfp,100,1.0000,0.0000
+lift,sfp_1step,300,1.0000,0.0000
+square,sfp,400,0.7700,0.0829
+square,cl_sfp,300,0.7200,0.0884
+square,sfp_1step,800,0.5700,0.0975

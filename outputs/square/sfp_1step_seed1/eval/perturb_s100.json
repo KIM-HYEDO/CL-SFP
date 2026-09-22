@@ -1,0 +1,52 @@
+{
+  "rollout": "sfp_1step",
+  "trained_by": "sfp",
+  "method": "sfp_1step",
+  "tag": "_seed1",
+  "task": "square",
+  "seeds": 100,
+  "action_horizon": 1,
+  "pred_horizon": 16,
+  "obs_horizon": 2,
+  "obs_dim": 23,
+  "action_dim": 7,
+  "eval_action_horizon": 1,
+  "perturbs": [
+    0.0,
+    0.0001,
+    0.00025,
+    0.0003,
+    0.0005,
+    0.00075,
+    0.001,
+    0.00125,
+    0.0015
+  ],
+  "updated": "2026-09-16T05:05:30",
+  "args": {
+    "task": "square",
+    "mode": "eval",
+    "seeds": 100,
+    "ckpt": "800",
+    "perturbs": "0.0,0.0001,0.00025,0.0003,0.0005,0.00075,0.001,0.00125,0.0015",
+    "seed": 0,
+    "perturb": 0.0,
+    "out": null,
+    "dataset": null,
+    "device": "cuda",
+    "smoke": false,
+    "tag": "_seed1",
+    "redo": false,
+    "out_json": "outputs/square/sfp_1step_seed1/eval/perturb_s100.json",
+    "action_horizon": 1
+  },
+  "kind": "ckpt_sweep",
+  "metric": "mean over perturbs [0.0, 0.0001, 0.00025, 0.0003, 0.0005, 0.00075, 0.001, 0.00125, 0.0015]",
+  "table": [
+    {
+      "ckpt": 800,
+      "score": 0.33222222222222225,
+      "ci95": 0.0841174686535599
+    }
+  ]
+}

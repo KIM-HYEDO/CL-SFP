@@ -1,0 +1,135 @@
+{
+  "rollout": "cl_sfp",
+  "trained_by": "cl_sfp",
+  "method": "cl_sfp",
+  "tag": "_interp",
+  "task": "pusht",
+  "seeds": 100,
+  "action_horizon": 8,
+  "pred_horizon": 16,
+  "obs_horizon": 2,
+  "obs_dim": 5,
+  "action_dim": 2,
+  "eval_action_horizon": 8,
+  "perturbs": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0,
+    1.2,
+    1.4,
+    1.6,
+    1.8,
+    2.0,
+    2.4,
+    2.8
+  ],
+  "updated": "2026-09-14T16:56:10",
+  "args": {
+    "task": "pusht",
+    "mode": "eval",
+    "epochs": 1000,
+    "seeds": 100,
+    "ckpt": "1000",
+    "perturbs": "0.0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.4,2.8",
+    "seed": 0,
+    "perturb": 0.0,
+    "out": null,
+    "dataset": null,
+    "batch_size": 1024,
+    "num_workers": 1,
+    "device": "cuda",
+    "smoke": false,
+    "train_seed": 0,
+    "tag": "_interp",
+    "cond_interp": false,
+    "ckpt_path": null,
+    "action_horizon": 8,
+    "redo": false,
+    "out_json": "outputs/pusht/cl_sfp_interp/eval/perturb_rand_s100.json"
+  },
+  "kind": "perturb_curve",
+  "ckpt": 1000,
+  "table": [
+    {
+      "perturb": 0.0,
+      "score": 0.8901415639682699,
+      "ci95": 0.0504162321479771,
+      "n": 100
+    },
+    {
+      "perturb": 0.2,
+      "score": 0.8683080223974199,
+      "ci95": 0.05231130145737234,
+      "n": 100
+    },
+    {
+      "perturb": 0.4,
+      "score": 0.8365848724573989,
+      "ci95": 0.048153039174350036,
+      "n": 100
+    },
+    {
+      "perturb": 0.6,
+      "score": 0.7994031077655868,
+      "ci95": 0.04984121299711761,
+      "n": 100
+    },
+    {
+      "perturb": 0.8,
+      "score": 0.7796828248234645,
+      "ci95": 0.05034435513082578,
+      "n": 100
+    },
+    {
+      "perturb": 1.0,
+      "score": 0.7461661731937446,
+      "ci95": 0.048965789630426935,
+      "n": 100
+    },
+    {
+      "perturb": 1.2,
+      "score": 0.694566186421511,
+      "ci95": 0.05023347544067885,
+      "n": 100
+    },
+    {
+      "perturb": 1.4,
+      "score": 0.6296094515400203,
+      "ci95": 0.054539414794278346,
+      "n": 100
+    },
+    {
+      "perturb": 1.6,
+      "score": 0.5785769741937669,
+      "ci95": 0.05325254920088155,
+      "n": 100
+    },
+    {
+      "perturb": 1.8,
+      "score": 0.5494510273058288,
+      "ci95": 0.05339445691233922,
+      "n": 100
+    },
+    {
+      "perturb": 2.0,
+      "score": 0.5306873565564795,
+      "ci95": 0.0535653211307832,
+      "n": 100
+    },
+    {
+      "perturb": 2.4,
+      "score": 0.4431323691171557,
+      "ci95": 0.053384011408336436,
+      "n": 100
+    },
+    {
+      "perturb": 2.8,
+      "score": 0.41191050310988125,
+      "ci95": 0.05790078492701773,
+      "n": 100
+    }
+  ]
+}

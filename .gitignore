@@ -1,7 +1,8 @@
-# Experiment products: ~30G of checkpoints and eval JSON. The results are the
-# point of the project but they are not source, and they are regenerable from
-# the code plus the datasets.
-outputs/
+# Checkpoints: ~39G and growing, regenerable from the code plus the datasets.
+# The eval JSON/CSV/PNG sitting next to them is 8 MB and IS the result, so it
+# stays tracked - that is the part a paper is written from and the part that
+# cannot be regenerated without spending the GPU time again.
+*.ckpt
 logs/
 
 # Datasets, downloaded from robomimic / diffusion-policy. See HANDOFF.md for

@@ -1,0 +1,136 @@
+{
+  "rollout": "cl_sfp",
+  "trained_by": "cl_sfp",
+  "method": "cl_sfp",
+  "tag": "_interp_swa",
+  "task": "pusht",
+  "seeds": 100,
+  "action_horizon": 8,
+  "pred_horizon": 16,
+  "obs_horizon": 2,
+  "obs_dim": 5,
+  "action_dim": 2,
+  "eval_action_horizon": 8,
+  "perturbs": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0,
+    1.2,
+    1.4,
+    1.6,
+    1.8,
+    2.0,
+    2.4,
+    2.8
+  ],
+  "updated": "2026-09-21T18:41:43",
+  "args": {
+    "task": "pusht",
+    "mode": "eval",
+    "epochs": 1000,
+    "seeds": 100,
+    "ckpt": "1000",
+    "perturbs": "0.0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.4,2.8",
+    "seed": 0,
+    "perturb": 0.0,
+    "out": null,
+    "dataset": null,
+    "batch_size": 1024,
+    "num_workers": 1,
+    "device": "cuda",
+    "smoke": false,
+    "train_seed": 0,
+    "tag": "_interp_swa",
+    "sigma_min": 0.0,
+    "cond_interp": false,
+    "ckpt_path": null,
+    "action_horizon": 8,
+    "redo": false,
+    "out_json": "outputs/pusht/cl_sfp_interp_swa/eval/perturb_rand_s100.json"
+  },
+  "kind": "perturb_curve",
+  "ckpt": 1000,
+  "table": [
+    {
+      "perturb": 0.0,
+      "score": 0.8893628883563176,
+      "ci95": 0.050991086531421155,
+      "n": 100
+    },
+    {
+      "perturb": 0.2,
+      "score": 0.9228515399062391,
+      "ci95": 0.03953054233817345,
+      "n": 100
+    },
+    {
+      "perturb": 0.4,
+      "score": 0.8848660852330923,
+      "ci95": 0.04182744078798445,
+      "n": 100
+    },
+    {
+      "perturb": 0.6,
+      "score": 0.8422846121004703,
+      "ci95": 0.04353012561357596,
+      "n": 100
+    },
+    {
+      "perturb": 0.8,
+      "score": 0.7708528355516553,
+      "ci95": 0.048837156896755336,
+      "n": 100
+    },
+    {
+      "perturb": 1.0,
+      "score": 0.7314013576568941,
+      "ci95": 0.047515319002404716,
+      "n": 100
+    },
+    {
+      "perturb": 1.2,
+      "score": 0.7047060105583368,
+      "ci95": 0.04795880934987521,
+      "n": 100
+    },
+    {
+      "perturb": 1.4,
+      "score": 0.6568543685877549,
+      "ci95": 0.051234099004887255,
+      "n": 100
+    },
+    {
+      "perturb": 1.6,
+      "score": 0.6291169339941,
+      "ci95": 0.05098329638821257,
+      "n": 100
+    },
+    {
+      "perturb": 1.8,
+      "score": 0.5793641232642187,
+      "ci95": 0.052296148399185956,
+      "n": 100
+    },
+    {
+      "perturb": 2.0,
+      "score": 0.5485755446232833,
+      "ci95": 0.055246599397391266,
+      "n": 100
+    },
+    {
+      "perturb": 2.4,
+      "score": 0.4627415138232356,
+      "ci95": 0.05718655367397654,
+      "n": 100
+    },
+    {
+      "perturb": 2.8,
+      "score": 0.3847097832578665,
+      "ci95": 0.05325265684951415,
+      "n": 100
+    }
+  ]
+}

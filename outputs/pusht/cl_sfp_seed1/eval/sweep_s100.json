@@ -1,0 +1,120 @@
+{
+  "rollout": "cl_sfp",
+  "trained_by": "cl_sfp",
+  "method": "cl_sfp",
+  "tag": "_seed1",
+  "task": "pusht",
+  "seeds": 100,
+  "action_horizon": 8,
+  "pred_horizon": 16,
+  "obs_horizon": 2,
+  "obs_dim": 5,
+  "action_dim": 2,
+  "eval_action_horizon": 8,
+  "perturbs": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0,
+    1.2,
+    1.4,
+    1.6,
+    1.8,
+    2.0
+  ],
+  "updated": "2026-09-13T16:56:00",
+  "args": {
+    "task": "pusht",
+    "mode": "eval",
+    "epochs": 1000,
+    "seeds": 100,
+    "ckpt": "1000",
+    "perturbs": "0.0-2.0",
+    "seed": 0,
+    "perturb": 0.0,
+    "out": null,
+    "dataset": null,
+    "batch_size": 1024,
+    "num_workers": 1,
+    "device": "cuda",
+    "smoke": false,
+    "train_seed": 0,
+    "tag": "_seed1",
+    "ckpt_path": null,
+    "action_horizon": 8,
+    "redo": false,
+    "out_json": null
+  },
+  "kind": "perturb_curve",
+  "ckpt": 1000,
+  "table": [
+    {
+      "perturb": 0.0,
+      "score": 0.8281775232669493,
+      "ci95": 0.06725968792391007,
+      "n": 100
+    },
+    {
+      "perturb": 0.2,
+      "score": 0.8753174629655065,
+      "ci95": 0.053917343700595234,
+      "n": 100
+    },
+    {
+      "perturb": 0.4,
+      "score": 0.8756968647126325,
+      "ci95": 0.05087459801999335,
+      "n": 100
+    },
+    {
+      "perturb": 0.6,
+      "score": 0.8791519233890461,
+      "ci95": 0.05016949818900415,
+      "n": 100
+    },
+    {
+      "perturb": 0.8,
+      "score": 0.8811632143848823,
+      "ci95": 0.04499205835887934,
+      "n": 100
+    },
+    {
+      "perturb": 1.0,
+      "score": 0.850856647085806,
+      "ci95": 0.04619190203991134,
+      "n": 100
+    },
+    {
+      "perturb": 1.2,
+      "score": 0.8040234738554024,
+      "ci95": 0.05192152156422017,
+      "n": 100
+    },
+    {
+      "perturb": 1.4,
+      "score": 0.7778886389853085,
+      "ci95": 0.05329555690657144,
+      "n": 100
+    },
+    {
+      "perturb": 1.6,
+      "score": 0.7503408659377524,
+      "ci95": 0.0536200647565287,
+      "n": 100
+    },
+    {
+      "perturb": 1.8,
+      "score": 0.7086101831585279,
+      "ci95": 0.060363163148537805,
+      "n": 100
+    },
+    {
+      "perturb": 2.0,
+      "score": 0.5988806654153371,
+      "ci95": 0.06554317190054852,
+      "n": 100
+    }
+  ]
+}

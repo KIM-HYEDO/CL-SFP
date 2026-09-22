@@ -1,0 +1,3 @@
+task,method,best_ckpt,score,ci95
+can,cl_sfp,200,0.9500,0.0429
+square,cl_sfp,400,0.7300,0.0875

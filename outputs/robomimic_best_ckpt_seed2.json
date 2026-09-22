@@ -1,0 +1,141 @@
+[
+  {
+    "task": "can",
+    "method": "sfp",
+    "best_ckpt": 300,
+    "score": 0.92,
+    "ci95": 0.05344134517148098,
+    "evaluated": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600
+    ]
+  },
+  {
+    "task": "can",
+    "method": "cl_sfp",
+    "best_ckpt": 500,
+    "score": 0.84,
+    "ci95": 0.07221677803878425,
+    "evaluated": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ]
+  },
+  {
+    "task": "can",
+    "method": "sfp_1step",
+    "best_ckpt": 500,
+    "score": 0.83,
+    "ci95": 0.07399493294145283,
+    "evaluated": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600
+    ]
+  },
+  {
+    "task": "lift",
+    "method": "sfp",
+    "best_ckpt": 200,
+    "score": 1.0,
+    "ci95": 0.0,
+    "evaluated": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600
+    ]
+  },
+  {
+    "task": "lift",
+    "method": "cl_sfp",
+    "best_ckpt": 100,
+    "score": 1.0,
+    "ci95": 0.0,
+    "evaluated": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600
+    ]
+  },
+  {
+    "task": "lift",
+    "method": "sfp_1step",
+    "best_ckpt": 100,
+    "score": 1.0,
+    "ci95": 0.0,
+    "evaluated": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700,
+      800
+    ]
+  },
+  {
+    "task": "square",
+    "method": "sfp",
+    "best_ckpt": 300,
+    "score": 0.73,
+    "ci95": 0.08745442449434083,
+    "evaluated": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600
+    ]
+  },
+  {
+    "task": "square",
+    "method": "cl_sfp",
+    "best_ckpt": 300,
+    "score": 0.8,
+    "ci95": 0.07879496471632223,
+    "evaluated": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600
+    ]
+  },
+  {
+    "task": "square",
+    "method": "sfp_1step",
+    "best_ckpt": 600,
+    "score": 0.68,
+    "ci95": 0.09188992976338153,
+    "evaluated": [
+      100,
+      200,
+      300,
+      400,
+      500,
+      600,
+      700
+    ]
+  }
+]

@@ -1,0 +1,136 @@
+{
+  "rollout": "cl_sfp",
+  "trained_by": "cl_sfp",
+  "method": "cl_sfp",
+  "tag": "_interp_seed2",
+  "task": "pusht",
+  "seeds": 100,
+  "action_horizon": 8,
+  "pred_horizon": 16,
+  "obs_horizon": 2,
+  "obs_dim": 5,
+  "action_dim": 2,
+  "eval_action_horizon": 4,
+  "perturbs": [
+    0.0,
+    0.2,
+    0.4,
+    0.6,
+    0.8,
+    1.0,
+    1.2,
+    1.4,
+    1.6,
+    1.8,
+    2.0,
+    2.4,
+    2.8
+  ],
+  "updated": "2026-09-21T17:51:44",
+  "args": {
+    "task": "pusht",
+    "mode": "eval",
+    "epochs": 1000,
+    "seeds": 100,
+    "ckpt": "1000",
+    "perturbs": "0.0,0.2,0.4,0.6,0.8,1.0,1.2,1.4,1.6,1.8,2.0,2.4,2.8",
+    "seed": 0,
+    "perturb": 0.0,
+    "out": null,
+    "dataset": null,
+    "batch_size": 1024,
+    "num_workers": 1,
+    "device": "cuda",
+    "smoke": false,
+    "train_seed": 0,
+    "tag": "_interp_seed2",
+    "sigma_min": 0.0,
+    "cond_interp": false,
+    "ckpt_path": null,
+    "action_horizon": 4,
+    "redo": false,
+    "out_json": "outputs/pusht/cl_sfp_interp_seed2/eval/perturb_rand_ah4_s100.json"
+  },
+  "kind": "perturb_curve",
+  "ckpt": 1000,
+  "table": [
+    {
+      "perturb": 0.0,
+      "score": 0.7795426273989722,
+      "ci95": 0.04999326446614448,
+      "n": 100
+    },
+    {
+      "perturb": 0.2,
+      "score": 0.8177040864187097,
+      "ci95": 0.046534898179505874,
+      "n": 100
+    },
+    {
+      "perturb": 0.4,
+      "score": 0.7710562700869903,
+      "ci95": 0.05053032251763793,
+      "n": 100
+    },
+    {
+      "perturb": 0.6,
+      "score": 0.7644354940086704,
+      "ci95": 0.04604003459321631,
+      "n": 100
+    },
+    {
+      "perturb": 0.8,
+      "score": 0.7572374737856723,
+      "ci95": 0.05061237851069723,
+      "n": 100
+    },
+    {
+      "perturb": 1.0,
+      "score": 0.6811174147656384,
+      "ci95": 0.049669076243350346,
+      "n": 100
+    },
+    {
+      "perturb": 1.2,
+      "score": 0.644904956376427,
+      "ci95": 0.05340897098819822,
+      "n": 100
+    },
+    {
+      "perturb": 1.4,
+      "score": 0.6335321260527218,
+      "ci95": 0.05348458167599319,
+      "n": 100
+    },
+    {
+      "perturb": 1.6,
+      "score": 0.621480316480714,
+      "ci95": 0.05230857783060773,
+      "n": 100
+    },
+    {
+      "perturb": 1.8,
+      "score": 0.5808680272779574,
+      "ci95": 0.04935650822124272,
+      "n": 100
+    },
+    {
+      "perturb": 2.0,
+      "score": 0.5379928859995625,
+      "ci95": 0.050815609129408336,
+      "n": 100
+    },
+    {
+      "perturb": 2.4,
+      "score": 0.4915526803873519,
+      "ci95": 0.05003669635679487,
+      "n": 100
+    },
+    {
+      "perturb": 2.8,
+      "score": 0.44763583599086604,
+      "ci95": 0.05195562157523653,
+      "n": 100
+    }
+  ]
+}
