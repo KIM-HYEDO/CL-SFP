@@ -46,20 +46,20 @@ SFP(Streaming Flow Policy)를 **폐루프로 바꾸면 외란에 강인해지는
 
 | | pusht | can | square | lift | transport | tool_hang |
 |---|---|---|---|---|---|---|
-| SFP | 3 | 3 | 3 | 3 | 진행 중 | 진행 중 |
+| SFP | 3 | 3 | 3 | 3 | 3† | 3† |
 | SFP-1step | 3 | 3 | 3 | 3 | — | — |
 | SFP-ah4 | 3 | 3 | 3 | — | — | — |
 | SFP-ah2 | 3 | **1** | **1** | — | — | — |
-| CL-SFP | 3 | 3 | 3 | 3 | 진행 중 | 진행 중 |
+| CL-SFP | 3 | 3 | 3 | 3 | 3† | 3† |
 | CL-SFP-1step | 3 | 3 | 3 | 3 | — | — |
-| CL-SFP+i | 3 | 3 | 3 | — | 진행 중 | 진행 중 |
+| CL-SFP+i | 3 | 3 | 3 | — | 3† | 3† |
 | CL-SFP+i-ah4 | 3 | 3 | 3 | — | — | — |
 | +σ_min 0.02 | 3 | 3 | — | — | — | — |
 | +σ_min 0.05 | 3 | 3 | — | — | — | — |
 | +SWA | 3 | 3 | 3 | — | — | — |
 | gated excess γ=3 | 3 | — | — | — | — | — |
 
-transport / tool_hang은 **외란 0.0(정적)만** 측정한다. 나머지 열은 전부 외란 커브가 있다.
+† transport / tool_hang은 **외란 0.0(정적)만**, 예산 700스텝. 나머지 열은 전부 외란 커브가 있다.
 
 `lift`는 SFP가 이미 1.000 만점 → 의도적 제외로 보임.
 **미완: square의 σ_min, gated 계열 전반(soft/hard/fixed 전부, robomimic 전부).**
@@ -214,16 +214,46 @@ robomimic env는 `ignore_done: true`라 **모든 에피소드가 예산을 끝�
 학습 속도는 윈도 수에 정확히 비례 (square 28,754 / transport 92,352 / tool_hang 94,562).
 **평가가 압도적으로 비싸다** — 학습은 전체의 15% 미만.
 
-### 진행 중인 실행
+### 실행 기록
 
-`train_newtasks.sh`. method는 **sfp / cl_sfp / cl_sfp+interp 3종만**, 외란은
-**0.0만** (정적 ckpt 스윕). 두 태스크를 GPU 0/1에 나눠 병렬 실행 중이고,
-로그는 `logs/transport_*.log`, `logs/tool_hang_*.log`.
+`train_newtasks.sh`(학습) → `eval_newtasks_parallel.sh`(평가). method는 **sfp / cl_sfp /
+cl_sfp+interp 3종만**, 외란은 **0.0만** (정적 ckpt 스윕). 두 태스크를 GPU 0/1에 나눠
+병렬 실행, 2026-09-22 21:43 완료. 로그는 `logs/`.
 
 결과 집계는 `static_summary.py` (신규). 새 태스크 붙일 때 사전 점검은
 `check_dataset_env.py <task>`, 학습 후 적합도 확인은 `check_train_fit.py <task> <ep>`. `final_summary.py` / `paired_test.py`는
 외란 커브가 있다고 가정하므로 이 결과를 읽지 못한다 — 나중에 외란을 붙이면
 그때 `robomimic_sources()` / `ROBUST_BAND` / `MID_BAND`에 새 태스크를 추가해야 한다.
+
+### 결과 — 정적 성공률, 3 학습시드 × 100 eval seeds (2026-09-22 21:43 완료)
+
+`outputs/static_summary.csv`. ckpt는 시드별 static argmax(`sweep_driver` 규칙: ep100–600 필수,
+이후 개선될 때만 연장).
+
+| | SFP | CL-SFP | CL-SFP+i |
+|---|---|---|---|
+| **transport** | .403 ±.021 | .387 ±.038 | .407 ±.040 |
+| **tool_hang** | .240 ±.044 | **.093 ±.035** | **.337 ±.047** |
+
+**transport: 세 방법이 노이즈 안에서 동률.** 기존 태스크와 같은 패턴(외란 0에서는 폐루프가
+이득도 손해도 없음). 외란을 걸어야 분리가 생길 자리다. 학습 곡선이 **ep100–400에서 정점을
+찍고 내려간다**(SFP seed0: .41@200 → .26@600). 9개 중 4개가 ep100을 골랐다. 200 데모 /
+65M 파라미터 / 1000 epoch cosine이라 과적합 쪽 신호로 읽히고, 이 태스크는 epoch 예산을
+줄이거나 ckpt를 더 촘촘히(50 단위) 훑는 게 맞을 수 있다.
+
+**tool_hang: 순서가 선명하다 — CL-SFP+i > SFP > CL-SFP.**
+- 평범한 CL-SFP(floor 인덱싱)가 SFP의 **40% 수준**(.093 vs .240)으로 무너진다. 기존 태스크에서
+  static 손실은 .00–.06이었는데 여기선 .15다.
+- interp가 그걸 뒤집어 SFP를 **+.10(≈2 SE)** 앞선다. can/square에서 "interp가 최고"였던
+  결과가 정밀 삽입 태스크에서 가장 크게 재현된 것.
+- 해석: floor 인덱싱의 격자 경계 불일치는 conditioning이 한 스텝 어긋나는 오차인데,
+  tool_hang은 그 한 스텝이 삽입 성패를 가르는 태스크다. interp는 그 오차를 제거한다.
+  **"정밀도가 중요할수록 시간 정렬 conditioning의 정합성이 중요하다"**는 주장의 가장 강한 증거.
+- 학습은 ep300부터 시작되고(그 전 0%) 정점이 ep500–700. 조기종료가 정점 근처에서 끊는다.
+
+주의: static argmax는 winner's curse가 있다. 100 seeds에서 p≈.4의 이항 SE는 ≈.05이므로 ckpt
+간 .05 차이는 노이즈이고, 6–8개 중 최대를 고르면 대략 그만큼 부풀려진다. 세 방법에 동일하게
+걸리지만, 절대값을 읽을 때 감안할 것.
 
 ### 첫 결과와 "버그 아닌가" 진단 (2026-09-22)
 

@@ -1,0 +1,7 @@
+task,method,n_seeds,mean,std,ckpts
+transport,SFP,3,0.4033,0.0208,200|200|400
+transport,CL-SFP,3,0.3867,0.0379,100|600|100
+transport,CL-SFP+i,3,0.4067,0.0404,100|400|100
+tool_hang,SFP,3,0.2400,0.0436,500|700|700
+tool_hang,CL-SFP,3,0.0933,0.0351,400|400|300
+tool_hang,CL-SFP+i,3,0.3367,0.0473,600|500|700
