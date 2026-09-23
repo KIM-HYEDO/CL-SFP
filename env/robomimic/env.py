@@ -245,6 +245,10 @@ def make_env(dataset_path: str,
         render_offscreen=render_offscreen,
         use_image_obs=False,
     )
+    # CLSFP_PERTURB_OBJECT overrides the table for one run, so the choice of
+    # drift target on a multi-object task can be compared without editing
+    # tasks.py between runs. The value used is recorded in every sweep file.
+    perturb_object = os.environ.get("CLSFP_PERTURB_OBJECT") or PERTURB_OBJECT.get(task)
     return RobomimicLowdimWrapper(env=robomimic_env, obs_keys=obs_keys,
                                  perturb_level=perturb_level, perturb_kind=perturb_kind,
-                                 perturb_object=PERTURB_OBJECT.get(task))
+                                 perturb_object=perturb_object)

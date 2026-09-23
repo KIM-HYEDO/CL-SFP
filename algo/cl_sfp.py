@@ -822,6 +822,9 @@ def _load_sweep(path, task, seeds, g, tag=""):
         "seeds": seeds,
         "action_horizon": g["action_horizon"],
         "max_steps": g["max_steps"],
+        # which object the drift displaces (robomimic only); the result is a
+        # different experiment for a different object, so it travels with it
+        "perturb_object": getattr(g["env"], "perturb_object", None),
         "pred_horizon": g["pred_horizon"],
         "obs_horizon": g["obs_horizon"],
         "obs_dim": int(g["obs"].shape[-1]),
