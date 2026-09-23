@@ -289,7 +289,7 @@ def main():
     elif args.mode == "video":
         ck = ckpt[-1] if isinstance(ckpt, list) else ckpt
         out = args.out or f"{args.task}_{base.METHOD}_ep{ck}_seed{args.seed}_p{args.perturb}.mp4"
-        base.visualize(g, args.task, ck, args.seed, args.perturb, out, device=device)
+        base.visualize(g, args.task, ck, args.seed, args.perturb, out, device=device, tag=args.tag)
     else:
         ckpts = ckpt if isinstance(ckpt, list) else [ckpt]
         print(f"evaluating checkpoint(s): {ckpts}")

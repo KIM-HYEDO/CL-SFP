@@ -117,7 +117,7 @@ def main():
         out = args.out or (f"{args.task}_{METHOD}_ep{ckpt}"
                            f"_seed{args.seed}_p{args.perturb}.mp4")
         sfp.visualize(g, args.task, ckpt, args.seed, args.perturb, out,
-                      device=device)
+                      device=device, tag=args.tag)
     else:
         if ckpt is None:
             ckpts = sfp.default_ckpts(args.task, args.tag)

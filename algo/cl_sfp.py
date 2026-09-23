@@ -1057,11 +1057,13 @@ def evaluate(g, task, seeds, ckpts, perturbs, smoke, device=None,
     return payload
 
 
-def visualize(g, task, ckpt, seed, perturb, out, device=None):
+def visualize(g, task, ckpt, seed, perturb, out, device=None, tag=""):
     """Run a single episode and save it as a video (mp4, gif fallback)."""
     device = device or torch.device("cuda")
     env = g["env"]
-    ema_nets = load_ema_nets(g, task, ckpt, device)
+    # tag selects the checkpoint directory exactly as in eval; without it a
+    # video of "cl_sfp --tag _interp" would silently show the plain cl_sfp model
+    ema_nets = load_ema_nets(g, task, ckpt, device, tag=tag)
 
     env.seed(seed)
     score, imgs, _ = rollout(g, ema_nets, env, seed=seed, perturb_level=perturb,
@@ -1181,7 +1183,7 @@ def main():
         out = args.out or (f"{args.task}_cl_sfp_ep{ckpt}"
                            f"_seed{args.seed}_p{args.perturb}.mp4")
         visualize(g, args.task, ckpt, args.seed, args.perturb, out,
-                  device=device)
+                  device=device, tag=args.tag)
     else:
         ckpt = parse_ckpt(args.ckpt)
         if ckpt is None:
