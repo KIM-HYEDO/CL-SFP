@@ -33,13 +33,14 @@ METHODS = {
     "SFP": "sfp",
     "CL-SFP": "cl_sfp",
     "CL-SFP+i": "cl_sfp_interp",
+    "DP": "dp",              # Diffusion Policy baseline under the same protocol (algo/dp.py)
 }
 
 # --variant abs reads the absolute-action runs: sfp_abs / cl_sfp_abs / cl_sfp_abs_interp
 VARIANT = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--variant=")), "")
 TASKS = tuple(a for a in sys.argv[1:] if not a.startswith("--")) or ("transport", "tool_hang")
 if VARIANT:
-    METHODS = {f"{k} ({VARIANT})": (f"{v}_{VARIANT}" if v != "cl_sfp_interp" else f"cl_sfp_{VARIANT}_interp")
+    METHODS = {f"{k} ({VARIANT})": (f"cl_sfp_{VARIANT}_interp" if v == "cl_sfp_interp" else f"{v}_{VARIANT}")
                for k, v in METHODS.items()}
 
 
