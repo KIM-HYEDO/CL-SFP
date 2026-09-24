@@ -9,7 +9,8 @@
 # this run and goes into the output filename, because drifting a different
 # object is a different experiment; the sweep file records it too.
 #
-# Usage: bash drift_eval.sh <task> <dir> <levels> <n_eval_seeds> [target] [name]
+# Usage: [ABS=1] bash drift_eval.sh <task> <dir> <levels> <n_eval_seeds> [target] [name]
+#   ABS=1 for absolute-action checkpoints (dirs tagged _abs...)
 #   e.g. bash drift_eval.sh tool_hang cl_sfp_interp 0.0,0.0001,0.0005 50 stand pilot
 #   -> outputs/tool_hang/cl_sfp_interp/eval/perturb_pilot_stand_s50.json
 set -e
@@ -36,4 +37,4 @@ PY
 OUT=$D/perturb${NAME:+_$NAME}${TARGET:+_$TARGET}_s$N.json
 echo "==== $TASK/$DIR  ckpt=ep$BEST  target=${TARGET:-default}  -> $OUT"
 CLSFP_PERTURB_OBJECT=$TARGET $PY algo/$METHOD.py --task $TASK --mode eval --ckpt $BEST \
-    --seeds $N --perturbs $LEVELS --tag "$TAG" --out-json $OUT
+    --seeds $N --perturbs $LEVELS --tag "$TAG" --out-json $OUT ${ABS:+--abs-action}

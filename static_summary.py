@@ -35,7 +35,12 @@ METHODS = {
     "CL-SFP+i": "cl_sfp_interp",
 }
 
-TASKS = tuple(sys.argv[1:]) or ("transport", "tool_hang")
+# --variant abs reads the absolute-action runs: sfp_abs / cl_sfp_abs / cl_sfp_abs_interp
+VARIANT = next((a.split("=", 1)[1] for a in sys.argv[1:] if a.startswith("--variant=")), "")
+TASKS = tuple(a for a in sys.argv[1:] if not a.startswith("--")) or ("transport", "tool_hang")
+if VARIANT:
+    METHODS = {f"{k} ({VARIANT})": (f"{v}_{VARIANT}" if v != "cl_sfp_interp" else f"cl_sfp_{VARIANT}_interp")
+               for k, v in METHODS.items()}
 
 
 def best_static(task, prefix, suffix):
@@ -84,7 +89,7 @@ def main():
         print(f"{r['task']:<11} {r['method']:<{width}} {r['n_seeds']:>2}  "
               f"{r['mean']:.3f} +/- {r['std']:.3f}  {r['ckpts']}")
 
-    out = ROOT / "outputs" / "static_summary.csv"
+    out = ROOT / "outputs" / f"static_summary{'_' + VARIANT if VARIANT else ''}.csv"
     cols = ["task", "method", "n_seeds", "mean", "std", "ckpts"]
     with open(out, "w") as fh:
         fh.write(",".join(cols) + "\n")

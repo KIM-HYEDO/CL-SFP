@@ -33,6 +33,8 @@ def run_eval(task, method, ckpt_spec):
     cmd = [str(PY), str(ROOT / f"algo/{method}.py"), "--task", task,
            "--mode", "eval", "--ckpt", ckpt_spec,
            "--seeds", str(SEEDS), "--perturbs", PERTURB, "--tag", TAG]
+    if "--abs-action" in sys.argv:          # absolute-action checkpoints need the abs env
+        cmd.append("--abs-action")
     print(f"\n>>> {' '.join(cmd[1:])}", flush=True)
     subprocess.run(cmd, cwd=ROOT, env=ENV, check=True)
 

@@ -109,11 +109,15 @@ GRIPPER_DIMS = {t: (-1,) for t in ROBOMIMIC_TASKS}
 GRIPPER_DIMS["transport"] = (6, 13)
 
 
-def gripper_dims(task: str):
+def gripper_dims(task: str, abs_action: bool = False):
+    """Gripper action dims; with abs_action each arm is 10 wide, not 7."""
     if task not in GRIPPER_DIMS:
         raise ValueError(f"no gripper dims for task {task!r}; "
                          f"add them to env/robomimic/tasks.py")
-    return tuple(GRIPPER_DIMS[task])
+    dims = tuple(GRIPPER_DIMS[task])
+    if abs_action:
+        dims = tuple(d if d < 0 else (d // 7) * 10 + 9 for d in dims)
+    return dims
 
 
 def obs_keys(task: str) -> List[str]:

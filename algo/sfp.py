@@ -406,7 +406,7 @@ TASKS = ("pusht",) + ROBOMIMIC_TASKS
 
 
 def _build_pusht(dataset_path, pred_horizon, obs_horizon, action_horizon,
-                 env_seed, perturb_level, need_render, task="pusht"):
+                 env_seed, perturb_level, need_render, task="pusht", abs_action=False):
     from env.pusht.pusht_env import PushTEnv
     from env.pusht.pusht_data import (PushTDataset, make_dataloader,
                                       normalize_data, unnormalize_data)
@@ -427,7 +427,8 @@ def _build_pusht(dataset_path, pred_horizon, obs_horizon, action_horizon,
 
 
 def _build_robomimic(dataset_path, pred_horizon, obs_horizon, action_horizon,
-                     env_seed, perturb_level, need_render, task=None):
+                     env_seed, perturb_level, need_render, task=None,
+                     abs_action=False):
     from env.robomimic.env import make_env
     from env.robomimic.data import (RobomimicDataset, make_dataloader,
                                     normalize_data, unnormalize_data)
@@ -439,18 +440,24 @@ def _build_robomimic(dataset_path, pred_horizon, obs_horizon, action_horizon,
     # order, so both are handed the one list rather than each taking a default.
     keys = obs_keys(task)
     env = make_env(dataset_path, obs_keys=keys, perturb_level=perturb_level,
-                   render_offscreen=need_render, task=task)
+                   render_offscreen=need_render, task=task, abs_action=abs_action)
     env.seed(env_seed)
     dataset = RobomimicDataset(dataset_path=dataset_path,
                                pred_horizon=pred_horizon,
                                obs_horizon=obs_horizon,
                                action_horizon=action_horizon,
                                obs_keys=keys,
-                               gripper_dims=gripper_dims(task))
-    # robomimic actions are end-effector deltas, not positions, so "stay put"
-    # is the zero vector rather than a slice of the observation.
-    def initial_action(obs, action_dim):
-        return np.zeros(action_dim, dtype=np.float32)
+                               gripper_dims=gripper_dims(task, abs_action),
+                               abs_action=abs_action)
+    if abs_action:
+        # absolute pose: "stay put" is the pose the arm is in right now
+        def initial_action(obs, action_dim):
+            return env.current_eef_action()
+    else:
+        # robomimic delta actions: "stay put" is the zero vector rather than a
+        # slice of the observation.
+        def initial_action(obs, action_dim):
+            return np.zeros(action_dim, dtype=np.float32)
 
     return (env, dataset, make_dataloader, normalize_data, unnormalize_data,
             initial_action)
@@ -458,7 +465,7 @@ def _build_robomimic(dataset_path, pred_horizon, obs_horizon, action_horizon,
 
 def setup(task, dataset_path=None, batch_size=1024, num_workers=1,
           need_loader=True, env_seed=500, perturb_level=0.0,
-          need_render=False):
+          need_render=False, abs_action=False):
     """Build env + dataset + dataloader and return them in a namespace dict.
 
     Both task families expose the same contract, so everything downstream of
@@ -469,7 +476,11 @@ def setup(task, dataset_path=None, batch_size=1024, num_workers=1,
     """
     if task not in TASKS:
         raise ValueError(f"unsupported task: {task!r}; expected one of {TASKS}")
-    dataset_path = dataset_path or DEFAULT_DATASET[task]
+    if dataset_path is None:
+        dataset_path = DEFAULT_DATASET[task]
+        if abs_action:
+            # the converted copy; convert_abs_actions.py writes it
+            dataset_path = dataset_path.replace("low_dim.hdf5", "low_dim_abs.hdf5")
 
     # |o|o|                             observations: 2
     # | |a|a|a|a|a|a|a|a|               actions executed: 8
@@ -482,7 +493,7 @@ def setup(task, dataset_path=None, batch_size=1024, num_workers=1,
     (env, dataset, make_dataloader, normalize_data, unnormalize_data,
      initial_action) = builder(dataset_path, pred_horizon, obs_horizon,
                                action_horizon, env_seed, perturb_level,
-                               need_render, task)
+                               need_render, task, abs_action)
 
     # One probe step, so obs/action shapes come from the live env.
     obs, info = env.reset()
@@ -506,6 +517,7 @@ def setup(task, dataset_path=None, batch_size=1024, num_workers=1,
         "obs_horizon": obs_horizon,
         "action_horizon": action_horizon,
         "max_steps": MAX_STEPS[task],
+        "abs_action": abs_action,
         "normalize_data": normalize_data,
         "unnormalize_data": unnormalize_data,
         "initial_action": initial_action,
@@ -625,6 +637,7 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag=""):
             path = str(ckpt_dir / f"ep{epoch + 1}.ckpt")
             torch.save({"state_dict": ema.averaged_model.state_dict(),
                         "train_seed": train_seed, "tag": tag,
+                        "abs_action": g.get("abs_action", False),
                         "epoch": epoch + 1, "task": task}, path)
             print(f"[ep{epoch + 1}] loss={np.mean(losses):.4f}", flush=True)
         if smoke:
@@ -774,6 +787,7 @@ def _load_sweep(path, task, seeds, g, tag=""):
         "seeds": seeds,
         "action_horizon": g["action_horizon"],
         "max_steps": g["max_steps"],
+        "abs_action": g.get("abs_action", False),
         # which object the drift displaces (robomimic only); the result is a
         # different experiment for a different object, so it travels with it
         "perturb_object": getattr(g["env"], "perturb_object", None),
@@ -1093,6 +1107,10 @@ def main():
     ap.add_argument("--action-horizon", type=int, default=8,
                     help="actions executed per chunk at eval time; the model "
                          "is trained for 8. 1 = replan every step.")
+    ap.add_argument("--abs-action", action="store_true",
+                    help="robomimic: absolute end-effector actions (pos + 6D "
+                         "rotation + gripper) from low_dim_abs.hdf5, controller "
+                         "in control_delta=False. Use a distinct --tag (e.g. _abs).")
     ap.add_argument("--max-steps", type=int, default=None,
                     help="steps before an episode is cut off (default: the "
                          "task's budget in env/robomimic/tasks.py). A "
@@ -1112,7 +1130,8 @@ def main():
               batch_size=args.batch_size,
               num_workers=args.num_workers,
               need_loader=(args.mode == "train"),
-              need_render=(args.mode == "video"))
+              need_render=(args.mode == "video"),
+              abs_action=args.abs_action)
     print("shared infra loaded; obs_dim=%d action_dim=%d"
           % (g["obs"].shape[-1], g["action"].shape[-1]))
 

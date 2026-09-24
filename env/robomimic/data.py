@@ -165,7 +165,8 @@ def _ramp_one_gripper(actions, episode_ends, transition_steps, gripper_dim):
 # HDF5 -> flat arrays
 # =============================================================================
 def load_episodes(dataset_path: str,
-                  obs_keys: List[str]) -> Dict[str, np.ndarray]:
+                  obs_keys: List[str],
+                  action_key: str = "actions") -> Dict[str, np.ndarray]:
     """Concatenate every demo into flat (N, D) arrays plus episode boundaries.
 
     This replaces diffusion_policy's ReplayBuffer, which the original notebook
@@ -184,7 +185,7 @@ def load_episodes(dataset_path: str,
             obs = np.concatenate(
                 [np.asarray(demo["obs"][key]) for key in obs_keys],
                 axis=-1).astype(np.float32)
-            actions = np.asarray(demo["actions"]).astype(np.float32)
+            actions = np.asarray(demo[action_key]).astype(np.float32)
             assert len(obs) == len(actions), (
                 f"{name}: {len(obs)} obs vs {len(actions)} actions")
             obs_chunks.append(obs)
@@ -213,10 +214,21 @@ class RobomimicDataset(torch.utils.data.Dataset):
 
     def __init__(self, dataset_path, pred_horizon, obs_horizon, action_horizon,
                  obs_keys: List[str] = None, gripper_transition_steps: int = 5,
-                 gripper_dims=(-1,)):
+                 gripper_dims=(-1,), abs_action: bool = False):
         obs_keys = list(obs_keys or DEFAULT_OBS_KEYS)
 
-        raw = load_episodes(dataset_path, obs_keys)
+        # Absolute actions come from `actions_abs` (see convert_abs_actions.py)
+        # as [pos, axis-angle, gripper] per arm and are re-expressed with the
+        # 6D rotation the policy trains on: 7 -> 10 dims per arm. The gripper
+        # stays last, so the ramp below still finds it at -1 (single arm) or at
+        # the per-arm offsets in tasks.GRIPPER_DIMS, which are given in the
+        # 10-dim layout when abs_action is on.
+        raw = load_episodes(dataset_path, obs_keys,
+                            action_key="actions_abs" if abs_action else "actions")
+        if abs_action:
+            from env.robomimic.rotation import abs7_to_abs10
+            raw["action"] = abs7_to_abs10(raw["action"]).astype(np.float32)
+        self.abs_action = abs_action
         episode_ends = raw["episode_ends"]
 
         action_data = interpolate_binary_gripper_transitions(
