@@ -1,0 +1,4 @@
+task,method,n_seeds,mean,std,ckpts
+tool_hang,SFP (abs),3,0.4333,0.0473,400|500|300
+tool_hang,CL-SFP (abs),3,0.1233,0.0231,200|200|200
+tool_hang,CL-SFP+i (abs),3,0.2733,0.0115,800|500|600

@@ -1,0 +1,79 @@
+{
+  "rollout": "sfp",
+  "trained_by": "sfp",
+  "method": "sfp",
+  "tag": "_abs",
+  "task": "square",
+  "seeds": 100,
+  "action_horizon": 8,
+  "max_steps": 250,
+  "abs_action": true,
+  "perturb_object": null,
+  "pred_horizon": 16,
+  "obs_horizon": 2,
+  "obs_dim": 23,
+  "action_dim": 10,
+  "eval_action_horizon": 8,
+  "perturbs": [
+    0.0
+  ],
+  "updated": "2026-09-24T13:04:17",
+  "args": {
+    "task": "square",
+    "mode": "eval",
+    "epochs": 1000,
+    "seeds": 100,
+    "ckpt": "100-600",
+    "perturbs": "0.0",
+    "seed": 0,
+    "perturb": 0.0,
+    "out": null,
+    "dataset": null,
+    "batch_size": 1024,
+    "num_workers": 1,
+    "device": "cuda",
+    "smoke": false,
+    "train_seed": 0,
+    "tag": "_abs",
+    "ckpt_path": null,
+    "action_horizon": 8,
+    "abs_action": true,
+    "max_steps": null,
+    "redo": false,
+    "out_json": null
+  },
+  "kind": "ckpt_sweep",
+  "metric": "mean over perturbs [0.0]",
+  "table": [
+    {
+      "ckpt": 100,
+      "score": 0.49,
+      "ci95": 0.0984740051839555
+    },
+    {
+      "ckpt": 200,
+      "score": 0.72,
+      "ci95": 0.08844712853142574
+    },
+    {
+      "ckpt": 300,
+      "score": 0.74,
+      "ci95": 0.08640542444625436
+    },
+    {
+      "ckpt": 400,
+      "score": 0.69,
+      "ci95": 0.09110534694749942
+    },
+    {
+      "ckpt": 500,
+      "score": 0.7,
+      "ci95": 0.0902709725484803
+    },
+    {
+      "ckpt": 600,
+      "score": 0.73,
+      "ci95": 0.08745442449434085
+    }
+  ]
+}
