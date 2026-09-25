@@ -22,6 +22,7 @@ PY=.venv/bin/python
 
 # dir -> (script, tag): sfp_seed1 -> sfp/_seed1 ; cl_sfp_interp_seed2 -> cl_sfp/_interp_seed2
 case "$DIR" in
+    dp*)     METHOD=dp;     TAG=${DIR#dp} ;;
     sfp*)    METHOD=sfp;    TAG=${DIR#sfp} ;;
     cl_sfp*) METHOD=cl_sfp; TAG=${DIR#cl_sfp} ;;
     *) echo "unknown dir $DIR"; exit 1 ;;
