@@ -1,0 +1,81 @@
+{
+  "rollout": "dp",
+  "trained_by": "dp",
+  "method": "dp",
+  "tag": "_seed1",
+  "task": "tool_hang",
+  "seeds": 100,
+  "action_horizon": 8,
+  "max_steps": 700,
+  "abs_action": false,
+  "perturb_object": [
+    "frame"
+  ],
+  "pred_horizon": 16,
+  "obs_horizon": 2,
+  "obs_dim": 53,
+  "action_dim": 7,
+  "num_diffusion_iters": 100,
+  "eval_action_horizon": 8,
+  "perturbs": [
+    0.0
+  ],
+  "updated": "2026-09-25T05:21:19",
+  "args": {
+    "task": "tool_hang",
+    "mode": "eval",
+    "epochs": 1000,
+    "seeds": 100,
+    "ckpt": "100-600",
+    "perturbs": "0.0",
+    "seed": 0,
+    "perturb": 0.0,
+    "out": null,
+    "dataset": null,
+    "batch_size": 1024,
+    "num_workers": 1,
+    "device": "cuda",
+    "smoke": false,
+    "train_seed": 0,
+    "tag": "_seed1",
+    "abs_action": false,
+    "action_horizon": 8,
+    "max_steps": null,
+    "redo": false,
+    "out_json": null
+  },
+  "kind": "ckpt_sweep",
+  "metric": "mean over perturbs [0.0]",
+  "table": [
+    {
+      "ckpt": 100,
+      "score": 0.84,
+      "ci95": 0.07221677803878425
+    },
+    {
+      "ckpt": 200,
+      "score": 0.91,
+      "ci95": 0.05637420428787364
+    },
+    {
+      "ckpt": 300,
+      "score": 0.89,
+      "ci95": 0.061635343396103145
+    },
+    {
+      "ckpt": 400,
+      "score": 0.85,
+      "ci95": 0.0703385751313968
+    },
+    {
+      "ckpt": 500,
+      "score": 0.85,
+      "ci95": 0.0703385751313968
+    },
+    {
+      "ckpt": 600,
+      "score": 0.77,
+      "ci95": 0.08289870659760354
+    }
+  ]
+}
