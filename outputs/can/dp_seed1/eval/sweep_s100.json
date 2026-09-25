@@ -2,8 +2,8 @@
   "rollout": "dp",
   "trained_by": "dp",
   "method": "dp",
-  "tag": "",
-  "task": "square",
+  "tag": "_seed1",
+  "task": "can",
   "seeds": 100,
   "action_horizon": 8,
   "max_steps": 250,
@@ -18,9 +18,9 @@
   "perturbs": [
     0.0
   ],
-  "updated": "2026-09-25T06:27:09",
+  "updated": "2026-09-25T10:53:38",
   "args": {
-    "task": "square",
+    "task": "can",
     "mode": "eval",
     "epochs": 1000,
     "seeds": 100,
@@ -35,7 +35,7 @@
     "device": "cuda",
     "smoke": false,
     "train_seed": 0,
-    "tag": "",
+    "tag": "_seed1",
     "abs_action": false,
     "action_horizon": 8,
     "max_steps": null,
@@ -47,38 +47,38 @@
   "table": [
     {
       "ckpt": 100,
-      "score": 0.78,
-      "ci95": 0.0816013071790724
+      "score": 0.86,
+      "ci95": 0.06835207725187628
     },
     {
       "ckpt": 200,
-      "score": 0.79,
-      "ci95": 0.08023459542510514
+      "score": 0.89,
+      "ci95": 0.06163534339610313
     },
     {
       "ckpt": 300,
-      "score": 0.73,
-      "ci95": 0.08745442449434083
+      "score": 0.97,
+      "ci95": 0.033603535167561996
     },
     {
       "ckpt": 400,
-      "score": 0.77,
-      "ci95": 0.08289870659760354
+      "score": 0.93,
+      "ci95": 0.05026075039534359
     },
     {
       "ckpt": 500,
-      "score": 0.8,
-      "ci95": 0.07879496471632223
+      "score": 0.94,
+      "ci95": 0.04678191828888464
     },
     {
       "ckpt": 600,
-      "score": 0.85,
-      "ci95": 0.0703385751313968
+      "score": 0.97,
+      "ci95": 0.033603535167561996
     },
     {
       "ckpt": 700,
-      "score": 0.79,
-      "ci95": 0.08023459542510514
+      "score": 0.96,
+      "ci95": 0.038601491571118744
     }
   ]
 }
