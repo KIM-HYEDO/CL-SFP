@@ -449,6 +449,9 @@ def _build_robomimic(dataset_path, pred_horizon, obs_horizon, action_horizon,
                                obs_keys=keys,
                                gripper_dims=gripper_dims(task, abs_action),
                                abs_action=abs_action)
+    # width of the "object" block, which leads the observation vector; the
+    # closed-loop split window (cl_sfp --stale-proprio) refreshes only this part
+    env.obj_dim = int(env.env.get_observation()["object"].shape[0])
     if abs_action:
         # absolute pose: "stay put" is the pose the arm is in right now
         def initial_action(obs, action_dim):
@@ -518,6 +521,7 @@ def setup(task, dataset_path=None, batch_size=1024, num_workers=1,
         "action_horizon": action_horizon,
         "max_steps": MAX_STEPS[task],
         "abs_action": abs_action,
+        "obj_dim": getattr(env, "obj_dim", None),
         "normalize_data": normalize_data,
         "unnormalize_data": unnormalize_data,
         "initial_action": initial_action,

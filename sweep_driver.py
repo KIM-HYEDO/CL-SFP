@@ -35,6 +35,8 @@ def run_eval(task, method, ckpt_spec):
            "--seeds", str(SEEDS), "--perturbs", PERTURB, "--tag", TAG]
     if "--abs-action" in sys.argv:          # absolute-action checkpoints need the abs env
         cmd.append("--abs-action")
+    if "--stale-proprio" in sys.argv:       # split-window checkpoints need the split rollout
+        cmd.append("--stale-proprio")
     print(f"\n>>> {' '.join(cmd[1:])}", flush=True)
     subprocess.run(cmd, cwd=ROOT, env=ENV, check=True)
 

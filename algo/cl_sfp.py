@@ -457,6 +457,9 @@ def _build_robomimic(dataset_path, pred_horizon, obs_horizon, action_horizon,
                                obs_keys=keys,
                                gripper_dims=gripper_dims(task, abs_action),
                                abs_action=abs_action)
+    # width of the "object" block, which leads the observation vector; the
+    # closed-loop split window (cl_sfp --stale-proprio) refreshes only this part
+    env.obj_dim = int(env.env.get_observation()["object"].shape[0])
     if abs_action:
         # absolute pose: "stay put" is the pose the arm is in right now
         def initial_action(obs, action_dim):
@@ -526,6 +529,7 @@ def setup(task, dataset_path=None, batch_size=1024, num_workers=1,
         "action_horizon": action_horizon,
         "max_steps": MAX_STEPS[task],
         "abs_action": abs_action,
+        "obj_dim": getattr(env, "obj_dim", None),
         "normalize_data": normalize_data,
         "unnormalize_data": unnormalize_data,
         "initial_action": initial_action,
@@ -595,7 +599,7 @@ def ckpt_meta(path):
 # 5. Training
 # =============================================================================
 def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
-          cond_interp=False, sigma_min=0.0):
+          cond_interp=False, sigma_min=0.0, stale_proprio=False):
     device = device or torch.device("cuda")
     dataloader = g["dataloader"]
     obs_horizon = g["obs_horizon"]
@@ -617,11 +621,15 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
                           num_warmup_steps=len(dataloader) * 10,
                           num_training_steps=len(dataloader) * epochs)
     T = pred_horizon - obs_horizon
+    obj_dim = g.get("obj_dim")
+    if stale_proprio and obj_dim is None:
+        raise ValueError("--stale-proprio needs a robomimic task (object block first in obs)")
 
     for epoch in tqdm(range(epochs), desc=f"CL-SFP-{task}"):
         losses = []
         for nbatch in dataloader:
             nobs_seq = nbatch["obs_seq"].to(device)
+            nobs = nbatch["obs"].to(device)                     # chunk-start window
             naction = nbatch["action"].to(device)
             xi = naction[:, obs_horizon - 1:, :]
             B = xi.shape[0]
@@ -664,6 +672,15 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
                 t_idx = (t * T).long().clamp(0, T)
                 idx = t_idx.unsqueeze(1) + torch.arange(obs_horizon, device=device)
                 win = nobs_seq[b_idx, idx]                          # (B, H, O)
+            if stale_proprio:
+                # Split window: the object block follows flow time (that is
+                # what closed-loop is for - the world moves), the robot block
+                # stays at the chunk start as in SFP. With absolute actions a
+                # fresh eef pose is the previous target to within controller
+                # lag, and the field learns "next target = current pose +
+                # momentum" instead of the task (HANDOFF: abs-action results).
+                # Freezing the pose removes that shortcut; the object stays live.
+                win = torch.cat([win[..., :obj_dim], nobs[..., obj_dim:]], dim=-1)
             current_flat = win.flatten(start_dim=1)                 # (B, H*O)
 
             vhat = nets["velocity_net"](sample=a, timestep=t,
@@ -685,6 +702,7 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
                         "train_seed": train_seed, "tag": tag,
                         "abs_action": g.get("abs_action", False),
                         "cond_interp": cond_interp, "sigma_min": sigma_min,
+                        "stale_proprio": stale_proprio,
                         "epoch": epoch + 1, "task": task}, path)
             print(f"[ep{epoch + 1}] loss={np.mean(losses):.4f}", flush=True)
         if smoke:
@@ -695,6 +713,9 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
 # =============================================================================
 # 6. Closed-loop inference
 # =============================================================================
+STALE_PROPRIO = False   # set by --stale-proprio; must match the checkpoint's training
+
+
 def rollout(g, ema_nets, env, seed=0, perturb_level=0.0, max_steps=None,
             action_horizon=8, save_vis=False, device=None):
     """Run one episode. Returns (score, frames, steps).
@@ -728,6 +749,8 @@ def rollout(g, ema_nets, env, seed=0, perturb_level=0.0, max_steps=None,
     na_prev = na.unsqueeze(0).unsqueeze(0)
 
     dt = 1.0 / (pred_horizon - obs_horizon)
+    obj_dim = g.get("obj_dim")
+    frozen_robot = None
 
     while not done:
         na = na_prev
@@ -748,6 +771,12 @@ def rollout(g, ema_nets, env, seed=0, perturb_level=0.0, max_steps=None,
                     break
 
                 ncur = normalize_data(np.stack(obs_deque), stats=stats["obs"])
+                if STALE_PROPRIO:
+                    # robot block from the chunk start (i == 0, after the first
+                    # executed action - the same instant SFP reads its window)
+                    if i == 0:
+                        frozen_robot = ncur[:, obj_dim:].copy()
+                    ncur = np.concatenate([ncur[:, :obj_dim], frozen_robot], axis=-1)
                 current_flat = torch.from_numpy(ncur).to(
                     device, torch.float32).flatten().unsqueeze(0)
                 
@@ -836,6 +865,7 @@ def _load_sweep(path, task, seeds, g, tag=""):
         "action_horizon": g["action_horizon"],
         "max_steps": g["max_steps"],
         "abs_action": g.get("abs_action", False),
+        "stale_proprio": STALE_PROPRIO,
         # which object the drift displaces (robomimic only); the result is a
         # different experiment for a different object, so it travels with it
         "perturb_object": getattr(g["env"], "perturb_object", None),
@@ -1155,6 +1185,10 @@ def main():
                     help="train: interpolate the conditioning window between "
                          "grid steps so it stays aligned with the target xi(t) "
                          "at every continuous t (see train())")
+    ap.add_argument("--stale-proprio", action="store_true",
+                    help="closed-loop split window: object block follows flow "
+                         "time, robot block frozen at the chunk start (train "
+                         "AND eval; use a distinct --tag)")
     ap.add_argument("--ckpt-path", default=None,
                     help="load this checkpoint file instead of outputs/<task>/<method>/. "
                          "Requires --out-json so the result does not land in a sweep file.")
@@ -1177,6 +1211,8 @@ def main():
     args = ap.parse_args()
     if args.ckpt_path and not args.out_json:
         ap.error("--ckpt-path needs --out-json")
+    global STALE_PROPRIO
+    STALE_PROPRIO = args.stale_proprio
 
     device = torch.device(args.device)
     g = setup(args.task,
@@ -1192,7 +1228,8 @@ def main():
     if args.mode == "train":
         train(g, args.task, args.epochs, args.smoke, device=device,
               train_seed=args.train_seed, tag=args.tag,
-              cond_interp=args.cond_interp, sigma_min=args.sigma_min)
+              cond_interp=args.cond_interp, sigma_min=args.sigma_min,
+              stale_proprio=args.stale_proprio)
     elif args.mode == "video":
         ckpt = parse_ckpt(args.ckpt)
         if ckpt is None:
