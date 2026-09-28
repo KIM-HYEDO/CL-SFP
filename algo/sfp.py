@@ -586,13 +586,17 @@ def load_ema_nets(g, task, ckpt, device, ckpt_path=None, tag=""):
     return ema.averaged_model.to(device).eval()
 
 
-def train(g, task, epochs, smoke, device=None, train_seed=0, tag=""):
+def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
+          sigma0=0.4, k=10.0):
     device = device or torch.device("cuda")
     dataloader = g["dataloader"]
     obs_horizon = g["obs_horizon"]
     pred_horizon = g["pred_horizon"]
 
-    sigma0, k = 0.4, 10
+    # Flow constants: a ~ N(xi(t), sigma0^2 e^{-2kt}), v = -k(a - xi) + xi'. The
+    # paper's 0.4 / 10 are the defaults; with dt = 1/14 the Euler contraction
+    # factor is 1 - k*dt, so k = 14 is deadbeat and k > 28 diverges.
+    sigma0, k = float(sigma0), float(k)
     # Re-seed here so --train-seed controls init and data order regardless of
     # the module-level set_random_seed(0) that ran at import.
     torch.manual_seed(train_seed); np.random.seed(train_seed)
@@ -641,6 +645,7 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag=""):
             path = str(ckpt_dir / f"ep{epoch + 1}.ckpt")
             torch.save({"state_dict": ema.averaged_model.state_dict(),
                         "train_seed": train_seed, "tag": tag,
+                        "sigma0": sigma0, "k": k,
                         "abs_action": g.get("abs_action", False),
                         "epoch": epoch + 1, "task": task}, path)
             print(f"[ep{epoch + 1}] loss={np.mean(losses):.4f}", flush=True)
@@ -1101,6 +1106,10 @@ def main():
     ap.add_argument("--num-workers", type=int, default=1)
     ap.add_argument("--device", default="cuda")
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--sigma0", type=float, default=0.4,
+                    help="train: initial flow noise std (paper 0.4)")
+    ap.add_argument("--k", type=float, default=10.0,
+                    help="train: flow contraction rate (paper 10; 14 = Euler deadbeat at dt=1/14)")
     ap.add_argument("--train-seed", type=int, default=0,
                     help="training RNG seed (init + data order)")
     ap.add_argument("--tag", default="",
@@ -1141,7 +1150,8 @@ def main():
 
     if args.mode == "train":
         train(g, args.task, args.epochs, args.smoke, device=device,
-              train_seed=args.train_seed, tag=args.tag)
+              train_seed=args.train_seed, tag=args.tag,
+              sigma0=args.sigma0, k=args.k)
     elif args.mode == "video":
         ckpt = parse_ckpt(args.ckpt)
         if ckpt is None:
