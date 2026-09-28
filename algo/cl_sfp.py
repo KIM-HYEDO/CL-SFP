@@ -543,7 +543,8 @@ def build_nets(g):
     obs_dim = g["obs"].shape[-1]
     action_dim = g["action"].shape[-1]
     obs_horizon = g["obs_horizon"]
-    cond_obs = obs_dim * obs_horizon
+    # --concat-obs0 conditions on [chunk-start window | flow-time window]: twice the width
+    cond_obs = obs_dim * obs_horizon * g.get("cond_mult", 1)
 
     velocity_net = ConditionalUnet1D(
         input_dim=action_dim,
@@ -600,7 +601,7 @@ def ckpt_meta(path):
 # =============================================================================
 def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
           cond_interp=False, sigma_min=0.0, stale_proprio=False,
-          sigma0=0.4, k=10.0):
+          sigma0=0.4, k=10.0, concat_obs0=False):
     device = device or torch.device("cuda")
     dataloader = g["dataloader"]
     obs_horizon = g["obs_horizon"]
@@ -686,6 +687,11 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
                 # Freezing the pose removes that shortcut; the object stays live.
                 win = torch.cat([win[..., :obj_dim], nobs[..., obj_dim:]], dim=-1)
             current_flat = win.flatten(start_dim=1)                 # (B, H*O)
+            if concat_obs0:
+                # Anchor + fresh: the field sees where the chunk started AND
+                # where the world is now, so it can read the change directly
+                # rather than infer it from the fresh window alone.
+                current_flat = torch.cat([nobs.flatten(start_dim=1), current_flat], dim=-1)
 
             vhat = nets["velocity_net"](sample=a, timestep=t,
                                         global_cond=current_flat)
@@ -707,7 +713,7 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
                         "sigma0": sigma0, "k": k,
                         "abs_action": g.get("abs_action", False),
                         "cond_interp": cond_interp, "sigma_min": sigma_min,
-                        "stale_proprio": stale_proprio,
+                        "stale_proprio": stale_proprio, "concat_obs0": concat_obs0,
                         "epoch": epoch + 1, "task": task}, path)
             print(f"[ep{epoch + 1}] loss={np.mean(losses):.4f}", flush=True)
         if smoke:
@@ -719,6 +725,7 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
 # 6. Closed-loop inference
 # =============================================================================
 STALE_PROPRIO = False   # set by --stale-proprio; must match the checkpoint's training
+CONCAT_OBS0 = False     # set by --concat-obs0; must match the checkpoint's training
 
 
 def rollout(g, ema_nets, env, seed=0, perturb_level=0.0, max_steps=None,
@@ -756,6 +763,7 @@ def rollout(g, ema_nets, env, seed=0, perturb_level=0.0, max_steps=None,
     dt = 1.0 / (pred_horizon - obs_horizon)
     obj_dim = g.get("obj_dim")
     frozen_robot = None
+    anchor_flat = None
 
     while not done:
         na = na_prev
@@ -784,6 +792,10 @@ def rollout(g, ema_nets, env, seed=0, perturb_level=0.0, max_steps=None,
                     ncur = np.concatenate([ncur[:, :obj_dim], frozen_robot], axis=-1)
                 current_flat = torch.from_numpy(ncur).to(
                     device, torch.float32).flatten().unsqueeze(0)
+                if CONCAT_OBS0:
+                    if i == 0:                       # chunk-start window, where SFP reads its own
+                        anchor_flat = current_flat.clone()
+                    current_flat = torch.cat([anchor_flat, current_flat], dim=-1)
                 
                 t = torch.tensor(i * dt, device=device, dtype=torch.float32)
                 nv = ema_nets["velocity_net"](sample=na, timestep=t,
@@ -871,6 +883,7 @@ def _load_sweep(path, task, seeds, g, tag=""):
         "max_steps": g["max_steps"],
         "abs_action": g.get("abs_action", False),
         "stale_proprio": STALE_PROPRIO,
+        "concat_obs0": CONCAT_OBS0,
         # which object the drift displaces (robomimic only); the result is a
         # different experiment for a different object, so it travels with it
         "perturb_object": getattr(g["env"], "perturb_object", None),
@@ -1198,6 +1211,9 @@ def main():
                     help="closed-loop split window: object block follows flow "
                          "time, robot block frozen at the chunk start (train "
                          "AND eval; use a distinct --tag)")
+    ap.add_argument("--concat-obs0", action="store_true",
+                    help="closed-loop conditioning on [chunk-start window | "
+                         "flow-time window] (train AND eval; distinct --tag)")
     ap.add_argument("--ckpt-path", default=None,
                     help="load this checkpoint file instead of outputs/<task>/<method>/. "
                          "Requires --out-json so the result does not land in a sweep file.")
@@ -1220,8 +1236,9 @@ def main():
     args = ap.parse_args()
     if args.ckpt_path and not args.out_json:
         ap.error("--ckpt-path needs --out-json")
-    global STALE_PROPRIO
+    global STALE_PROPRIO, CONCAT_OBS0
     STALE_PROPRIO = args.stale_proprio
+    CONCAT_OBS0 = args.concat_obs0
 
     device = torch.device(args.device)
     g = setup(args.task,
@@ -1231,6 +1248,8 @@ def main():
               need_loader=(args.mode == "train"),
               need_render=(args.mode == "video"),
               abs_action=args.abs_action)
+    if args.concat_obs0:
+        g["cond_mult"] = 2
     print("shared infra loaded; obs_dim=%d action_dim=%d"
           % (g["obs"].shape[-1], g["action"].shape[-1]))
 
@@ -1238,7 +1257,8 @@ def main():
         train(g, args.task, args.epochs, args.smoke, device=device,
               train_seed=args.train_seed, tag=args.tag,
               cond_interp=args.cond_interp, sigma_min=args.sigma_min,
-              stale_proprio=args.stale_proprio, sigma0=args.sigma0, k=args.k)
+              stale_proprio=args.stale_proprio, sigma0=args.sigma0, k=args.k,
+              concat_obs0=args.concat_obs0)
     elif args.mode == "video":
         ckpt = parse_ckpt(args.ckpt)
         if ckpt is None:

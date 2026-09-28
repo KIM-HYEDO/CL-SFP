@@ -37,6 +37,8 @@ def run_eval(task, method, ckpt_spec):
         cmd.append("--abs-action")
     if "--stale-proprio" in sys.argv:       # split-window checkpoints need the split rollout
         cmd.append("--stale-proprio")
+    if "--concat-obs0" in sys.argv:         # anchor+fresh checkpoints need the doubled conditioning
+        cmd.append("--concat-obs0")
     print(f"\n>>> {' '.join(cmd[1:])}", flush=True)
     subprocess.run(cmd, cwd=ROOT, env=ENV, check=True)
 
