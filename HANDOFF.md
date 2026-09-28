@@ -308,7 +308,7 @@ Pooled paired McNemar (n=300): +0.070, p=0.078. 세 시드 모두 정점이 ep70
 읽는 법: can·square는 중립(허용 오차가 커서 chunk 내 변화량 정보가 필요 없음), tool_hang은
 seed0의 +.16이 3시드에서 +.07로 줄었고 p≈0.08. **유망하지만 논문급 확정은 아님.** SFP 계열
 델타 액션 중 최고치이고 abs SFP(.43)와 같은 층. DP(.89)와의 간격은 그대로.
-transport는 진행 중.
+transport(seed0): .37 vs CL-SFP+i .37 — 중립. 네 태스크 중 tool_hang에서만 효과.
 
 ### SFP 하이퍼파라미터 튜닝 — tool_hang, seed0 (2026-09-28)
 
