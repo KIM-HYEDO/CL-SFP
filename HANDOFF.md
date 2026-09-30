@@ -544,3 +544,25 @@ failed`, 혹은 **에러 없이 futex 데드락**(시작 시에도, 작업을 �
 - robomimic 데이터셋은 **레거시(v0.1) URL**에서 받을 것. 공식 다운로드
   스크립트는 robosuite 1.5용 v1.5 파일을 주고, 이 환경에서는 못 연다
 - `--max-steps`를 기본값과 다르게 주면 sweep 파일이 `_ms<N>`으로 분리된다
+
+## Tier-1 추론 변형 (tool_hang, seed0 ckpt 고정, 재학습 없음, 100 seeds, perturb 0.0)
+
+기준: concat0 ep800 = .48, CL-SFP+i ep600 = .32. 짝지은 McNemar(sign test) p 는 같은 시드 기준.
+
+| 대상 | 변형 | 성공률 | 승/패 | p |
+|---|---|---|---|---|
+| concat0 | ah12 | .50 | 21/19 | .87 |
+| concat0 | substeps 2 | .46 | 22/24 | .88 |
+| concat0 | substeps 4 | .51 | 24/21 | .77 |
+| concat0 | SWA(ep600-900) | .39 | 15/24 | .20 |
+| CL-SFP+i | ah12 | .26 | 19/25 | .45 |
+| CL-SFP+i | substeps 2 | .38 | 26/20 | .46 |
+| CL-SFP+i | excess gate γ=3 | .36 | 21/17 | .63 |
+| CL-SFP+i | 고정 시계 t*=0.1 | .16 | 10/26 | .01 |
+| CL-SFP+i | 고정 시계 t*=0.25 | .17 | 11/26 | .02 |
+| CL-SFP+i | 고정 시계 t*=0.5 | .01 | 1/32 | <.001 |
+
+해석
+- 어떤 변형도 기준 대비 유의한 개선 없음. 같은 ckpt 재평가만으로도 시드별 승/패가 ~20/20 뒤집힘 → 시드별 확률적 샘플링 노이즈가 ±.05 수준, 이 범위 안의 차이는 신호로 볼 수 없음.
+- 시계 고정은 확실히 악화: flow clock 이 전진해야 한다는 CL-SFP 핵심 설계를 재확인 (ablation 으로 논문에 사용 가능).
+- 적분 오차(substeps)·실행 길이(ah)·SWA 는 병목이 아님. 병목은 추론 쪽이 아니라 학습된 필드 자체 → 2단계는 재학습 축(epoch↑, pred_horizon 32, obs 노이즈, 차이 입력, mini-chunk head).

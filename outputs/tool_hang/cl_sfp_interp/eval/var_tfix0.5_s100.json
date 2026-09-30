@@ -1,0 +1,67 @@
+{
+  "rollout": "cl_sfp_t0.5",
+  "trained_by": "cl_sfp",
+  "method": "cl_sfp_t0.5",
+  "tag": "_interp",
+  "task": "tool_hang",
+  "seeds": 100,
+  "action_horizon": 8,
+  "max_steps": 700,
+  "abs_action": false,
+  "stale_proprio": false,
+  "concat_obs0": false,
+  "substeps": 1,
+  "perturb_object": [
+    "frame"
+  ],
+  "pred_horizon": 16,
+  "obs_horizon": 2,
+  "obs_dim": 53,
+  "action_dim": 7,
+  "gate": {
+    "kind": "fixed",
+    "gamma": 1.0,
+    "tau": 0.0,
+    "tfix": 0.5,
+    "snap": true
+  },
+  "eval_action_horizon": 8,
+  "perturbs": [
+    0.0
+  ],
+  "updated": "2026-09-30T11:11:20",
+  "args": {
+    "task": "tool_hang",
+    "mode": "eval",
+    "gate": "fixed",
+    "tfix": 0.5,
+    "no_snap": false,
+    "gamma": 1.0,
+    "tau": 0.0,
+    "calib": "soft:1,soft:10",
+    "seed_from": 100,
+    "seeds": 100,
+    "ckpt": "600",
+    "perturbs": "0.0",
+    "seed": 0,
+    "perturb": 0.0,
+    "out": null,
+    "dataset": null,
+    "device": "cuda",
+    "smoke": false,
+    "tag": "_interp",
+    "max_steps": null,
+    "redo": false,
+    "out_json": "outputs/tool_hang/cl_sfp_interp/eval/var_tfix0.5_s100.json",
+    "action_horizon": 8
+  },
+  "kind": "ckpt_sweep",
+  "metric": "mean over perturbs [0.0]",
+  "table": [
+    {
+      "ckpt": 600,
+      "score": 0.01,
+      "ci95": 0.0196
+    }
+  ]
+}
