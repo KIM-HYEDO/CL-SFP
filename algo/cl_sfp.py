@@ -726,6 +726,7 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
 # =============================================================================
 STALE_PROPRIO = False   # set by --stale-proprio; must match the checkpoint's training
 CONCAT_OBS0 = False     # set by --concat-obs0; must match the checkpoint's training
+SUBSTEPS = 1            # Euler sub-steps per env step (--substeps); the field is continuous in t
 
 
 def rollout(g, ema_nets, env, seed=0, perturb_level=0.0, max_steps=None,
@@ -797,10 +798,15 @@ def rollout(g, ema_nets, env, seed=0, perturb_level=0.0, max_steps=None,
                         anchor_flat = current_flat.clone()
                     current_flat = torch.cat([anchor_flat, current_flat], dim=-1)
                 
-                t = torch.tensor(i * dt, device=device, dtype=torch.float32)
-                nv = ema_nets["velocity_net"](sample=na, timestep=t,
-                                              global_cond=current_flat)
-                na = na + nv * dt
+                # One env step advances flow time by dt; SUBSTEPS > 1 splits that
+                # into finer Euler steps at the same observation, cutting the
+                # integration error the flow otherwise accumulates step by step.
+                h = dt / SUBSTEPS
+                for j in range(SUBSTEPS):
+                    t = torch.tensor(i * dt + j * h, device=device, dtype=torch.float32)
+                    nv = ema_nets["velocity_net"](sample=na, timestep=t,
+                                                  global_cond=current_flat)
+                    na = na + nv * h
         na_prev = na.detach()
 
     return (max(rewards) if rewards else 0.0), imgs, step_idx
@@ -884,6 +890,7 @@ def _load_sweep(path, task, seeds, g, tag=""):
         "abs_action": g.get("abs_action", False),
         "stale_proprio": STALE_PROPRIO,
         "concat_obs0": CONCAT_OBS0,
+        "substeps": SUBSTEPS,
         # which object the drift displaces (robomimic only); the result is a
         # different experiment for a different object, so it travels with it
         "perturb_object": getattr(g["env"], "perturb_object", None),
@@ -1211,6 +1218,8 @@ def main():
                     help="closed-loop split window: object block follows flow "
                          "time, robot block frozen at the chunk start (train "
                          "AND eval; use a distinct --tag)")
+    ap.add_argument("--substeps", type=int, default=1,
+                    help="eval: Euler sub-steps per env step (1 = paper)")
     ap.add_argument("--concat-obs0", action="store_true",
                     help="closed-loop conditioning on [chunk-start window | "
                          "flow-time window] (train AND eval; distinct --tag)")
@@ -1236,9 +1245,10 @@ def main():
     args = ap.parse_args()
     if args.ckpt_path and not args.out_json:
         ap.error("--ckpt-path needs --out-json")
-    global STALE_PROPRIO, CONCAT_OBS0
+    global STALE_PROPRIO, CONCAT_OBS0, SUBSTEPS
     STALE_PROPRIO = args.stale_proprio
     CONCAT_OBS0 = args.concat_obs0
+    SUBSTEPS = max(1, args.substeps)
 
     device = torch.device(args.device)
     g = setup(args.task,
