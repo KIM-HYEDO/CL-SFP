@@ -601,7 +601,7 @@ def ckpt_meta(path):
 # =============================================================================
 def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
           cond_interp=False, sigma_min=0.0, stale_proprio=False,
-          sigma0=0.4, k=10.0, concat_obs0=False):
+          sigma0=0.4, k=10.0, concat_obs0=False, diff_obs0=False):
     device = device or torch.device("cuda")
     dataloader = g["dataloader"]
     obs_horizon = g["obs_horizon"]
@@ -691,7 +691,10 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
                 # Anchor + fresh: the field sees where the chunk started AND
                 # where the world is now, so it can read the change directly
                 # rather than infer it from the fresh window alone.
-                current_flat = torch.cat([nobs.flatten(start_dim=1), current_flat], dim=-1)
+                if diff_obs0:
+                    current_flat = torch.cat([current_flat, current_flat - nobs.flatten(start_dim=1)], dim=-1)
+                else:
+                    current_flat = torch.cat([nobs.flatten(start_dim=1), current_flat], dim=-1)
 
             vhat = nets["velocity_net"](sample=a, timestep=t,
                                         global_cond=current_flat)
@@ -713,7 +716,7 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
                         "sigma0": sigma0, "k": k,
                         "abs_action": g.get("abs_action", False),
                         "cond_interp": cond_interp, "sigma_min": sigma_min,
-                        "stale_proprio": stale_proprio, "concat_obs0": concat_obs0,
+                        "stale_proprio": stale_proprio, "concat_obs0": concat_obs0, "diff_obs0": diff_obs0,
                         "epoch": epoch + 1, "task": task}, path)
             print(f"[ep{epoch + 1}] loss={np.mean(losses):.4f}", flush=True)
         if smoke:
@@ -725,6 +728,7 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
 # 6. Closed-loop inference
 # =============================================================================
 STALE_PROPRIO = False   # set by --stale-proprio; must match the checkpoint's training
+DIFF_OBS0 = False       # set by --diff-obs0 (with --concat-obs0): cond = [fresh | fresh - chunk-start]
 CONCAT_OBS0 = False     # set by --concat-obs0; must match the checkpoint's training
 SUBSTEPS = 1            # Euler sub-steps per env step (--substeps); the field is continuous in t
 
@@ -796,7 +800,10 @@ def rollout(g, ema_nets, env, seed=0, perturb_level=0.0, max_steps=None,
                 if CONCAT_OBS0:
                     if i == 0:                       # chunk-start window, where SFP reads its own
                         anchor_flat = current_flat.clone()
-                    current_flat = torch.cat([anchor_flat, current_flat], dim=-1)
+                    if DIFF_OBS0:
+                        current_flat = torch.cat([current_flat, current_flat - anchor_flat], dim=-1)
+                    else:
+                        current_flat = torch.cat([anchor_flat, current_flat], dim=-1)
                 
                 # One env step advances flow time by dt; SUBSTEPS > 1 splits that
                 # into finer Euler steps at the same observation, cutting the
@@ -890,6 +897,7 @@ def _load_sweep(path, task, seeds, g, tag=""):
         "abs_action": g.get("abs_action", False),
         "stale_proprio": STALE_PROPRIO,
         "concat_obs0": CONCAT_OBS0,
+        "diff_obs0": DIFF_OBS0,
         "substeps": SUBSTEPS,
         # which object the drift displaces (robomimic only); the result is a
         # different experiment for a different object, so it travels with it
@@ -1220,6 +1228,9 @@ def main():
                          "AND eval; use a distinct --tag)")
     ap.add_argument("--substeps", type=int, default=1,
                     help="eval: Euler sub-steps per env step (1 = paper)")
+    ap.add_argument("--diff-obs0", action="store_true",
+                    help="with --concat-obs0: second half is (flow-time window - "
+                         "chunk-start window) instead of the raw chunk-start window")
     ap.add_argument("--concat-obs0", action="store_true",
                     help="closed-loop conditioning on [chunk-start window | "
                          "flow-time window] (train AND eval; distinct --tag)")
@@ -1245,9 +1256,12 @@ def main():
     args = ap.parse_args()
     if args.ckpt_path and not args.out_json:
         ap.error("--ckpt-path needs --out-json")
-    global STALE_PROPRIO, CONCAT_OBS0, SUBSTEPS
+    global STALE_PROPRIO, CONCAT_OBS0, SUBSTEPS, DIFF_OBS0
     STALE_PROPRIO = args.stale_proprio
     CONCAT_OBS0 = args.concat_obs0
+    DIFF_OBS0 = args.diff_obs0
+    if DIFF_OBS0 and not CONCAT_OBS0:
+        ap.error('--diff-obs0 needs --concat-obs0')
     SUBSTEPS = max(1, args.substeps)
 
     device = torch.device(args.device)
@@ -1268,7 +1282,7 @@ def main():
               train_seed=args.train_seed, tag=args.tag,
               cond_interp=args.cond_interp, sigma_min=args.sigma_min,
               stale_proprio=args.stale_proprio, sigma0=args.sigma0, k=args.k,
-              concat_obs0=args.concat_obs0)
+              concat_obs0=args.concat_obs0, diff_obs0=args.diff_obs0)
     elif args.mode == "video":
         ckpt = parse_ckpt(args.ckpt)
         if ckpt is None:
