@@ -579,3 +579,20 @@ failed`, 혹은 **에러 없이 futex 데드락**(시작 시에도, 작업을 �
 
 diff0 vs concat0: 승/패 81/56 (pooled 3 seeds), sign test p=.040. diff0 vs CL-SFP+i: 99/53, p<.001. DP .887, SFP .24 는 여전히 큰 격차.
 시드 분산이 크게 줄어든 점(.067→.017)이 평균 상승만큼 눈에 띔. 같은 정보를 선형 입력층이 이미 표현 가능하므로 이득은 입력 구조/스케일 효과로 보임 (차이값 스케일 키우기 미검증).
+
+## 성능 상한 탐색: 폭 ×2 / epoch 2500 / DAgger(DP teacher) (tool_hang, seed0, 100 eval seeds, perturb 0.0)
+
+기준 `diff0` 최고 ckpt = .50 (ep700). DP .887, SFP .24.
+
+| 변형 | 최고 ckpt | 성공률 | vs diff0 승/패 | p |
+|---|---|---|---|---|
+| diff0 + `--width-mult 2` (nominal 251M, 유효 ≈76M) | ep600 | .51 | 24/23 | 1.0 |
+| diff0 + epoch 2500 | ep600 | .34 | 17/33 | .033 (악화) |
+| diff0 ep700 → DAgger r0 (DP 라벨, 400ep fine-tune) | ep400 | .45 | 23/28 | .58 |
+
+w2 곡선 (ep100..700): 0 .01 .29 .44 .42 .51 .47 → diff0 (0 .02 .04 .11 .13 .33 .50 .30) 보다 **빨리 수렴**하지만 같은 ~.5 에서 정체.
+해석
+- 용량(폭)은 병목이 아님: 수렴 속도만 빨라지고 plateau 는 동일. epoch 를 늘리면(LR 스케줄 길어짐) 오히려 나쁨.
+- DAgger 1 round: 이득 없음. 의심 원인 — DP 라벨이 확률적 샘플 1개라 인접 상태에서 mode 가 뒤집힘, 라운드 1 로 데이터 적음, chunk 경계 실패는 chunk 내 교정 불가.
+- **교훈**: tool_hang 의 drift 스케일은 1e-4~1.5e-3 이다. 0.4/0.8 을 주면 DP/학생 모두 0% (dagger.py `--perturbs` 기본값이 이 스케일이라 tool_hang 에선 반드시 `0.0,0.00025,0.0005` 로 지정).
+- `dagger/` (원시 rollout npz + labels, 218M) 는 커밋하지 않음 (.gitignore).

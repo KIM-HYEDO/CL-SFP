@@ -551,6 +551,8 @@ def build_nets(g):
         global_cond_dim=cond_obs,   # anchor
         updownsample_type="Linear",
         sin_embedding_scale=100,
+        down_dims=[256 * g.get("width_mult", 1), 512 * g.get("width_mult", 1),
+                   1024 * g.get("width_mult", 1)],
     )
 
     return nn.ModuleDict({"velocity_net": velocity_net})
@@ -601,9 +603,18 @@ def ckpt_meta(path):
 # =============================================================================
 def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
           cond_interp=False, sigma_min=0.0, stale_proprio=False,
-          sigma0=0.4, k=10.0, concat_obs0=False, diff_obs0=False):
+          sigma0=0.4, k=10.0, concat_obs0=False, diff_obs0=False,
+          dagger_dir=None, init_ckpt=None):
     device = device or torch.device("cuda")
     dataloader = g["dataloader"]
+    if dagger_dir:
+        from env.robomimic.dagger_data import DaggerDataset
+        ds = torch.utils.data.ConcatDataset(
+            [g["dataset"]] + [DaggerDataset(d) for d in dagger_dir.split(",")])
+        print(f"demos + DP-labelled rollouts: {len(ds)} windows", flush=True)
+        dataloader = torch.utils.data.DataLoader(
+            ds, batch_size=dataloader.batch_size, shuffle=True, num_workers=4,
+            pin_memory=True, persistent_workers=True)
     obs_horizon = g["obs_horizon"]
     pred_horizon = g["pred_horizon"]
 
@@ -619,6 +630,9 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
     ckpt_dir.mkdir(parents=True, exist_ok=True)
 
     nets = build_nets(g).to(device)
+    if init_ckpt:
+        blob = torch.load(init_ckpt, map_location=device, weights_only=False)
+        nets.load_state_dict(blob["state_dict"])
     print(f"params={sum(p.numel() for p in nets.parameters())/1e6:.2f}M")
     ema = EMAModel(model=nets, power=0.75)
     opt = torch.optim.AdamW(nets.parameters(), lr=1e-4, weight_decay=1e-6)
@@ -716,7 +730,7 @@ def train(g, task, epochs, smoke, device=None, train_seed=0, tag="",
                         "sigma0": sigma0, "k": k,
                         "abs_action": g.get("abs_action", False),
                         "cond_interp": cond_interp, "sigma_min": sigma_min,
-                        "stale_proprio": stale_proprio, "concat_obs0": concat_obs0, "diff_obs0": diff_obs0,
+                        "stale_proprio": stale_proprio, "concat_obs0": concat_obs0, "diff_obs0": diff_obs0, "width_mult": g.get("width_mult", 1),
                         "epoch": epoch + 1, "task": task}, path)
             print(f"[ep{epoch + 1}] loss={np.mean(losses):.4f}", flush=True)
         if smoke:
@@ -1228,6 +1242,11 @@ def main():
                          "AND eval; use a distinct --tag)")
     ap.add_argument("--substeps", type=int, default=1,
                     help="eval: Euler sub-steps per env step (1 = paper)")
+    ap.add_argument("--dagger-dir", default=None,
+                    help="train: comma-separated dirs with labels.npz from dagger.py, mixed with the demos")
+    ap.add_argument("--init-ckpt", default=None, help="train: start from this checkpoint's weights")
+    ap.add_argument("--width-mult", type=int, default=1,
+                    help="multiply the UNet channel widths (train AND eval; distinct --tag)")
     ap.add_argument("--diff-obs0", action="store_true",
                     help="with --concat-obs0: second half is (flow-time window - "
                          "chunk-start window) instead of the raw chunk-start window")
@@ -1274,6 +1293,7 @@ def main():
               abs_action=args.abs_action)
     if args.concat_obs0:
         g["cond_mult"] = 2
+    g["width_mult"] = args.width_mult
     print("shared infra loaded; obs_dim=%d action_dim=%d"
           % (g["obs"].shape[-1], g["action"].shape[-1]))
 
@@ -1282,7 +1302,8 @@ def main():
               train_seed=args.train_seed, tag=args.tag,
               cond_interp=args.cond_interp, sigma_min=args.sigma_min,
               stale_proprio=args.stale_proprio, sigma0=args.sigma0, k=args.k,
-              concat_obs0=args.concat_obs0, diff_obs0=args.diff_obs0)
+              concat_obs0=args.concat_obs0, diff_obs0=args.diff_obs0,
+              dagger_dir=args.dagger_dir, init_ckpt=args.init_ckpt)
     elif args.mode == "video":
         ckpt = parse_ckpt(args.ckpt)
         if ckpt is None:

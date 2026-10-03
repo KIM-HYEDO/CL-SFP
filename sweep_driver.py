@@ -39,6 +39,7 @@ def run_eval(task, method, ckpt_spec):
         cmd.append("--stale-proprio")
     if "--concat-obs0" in sys.argv:         # anchor+fresh checkpoints need the doubled conditioning
         cmd.append("--concat-obs0")
+    cmd += [a for a in sys.argv if a.startswith("--width-mult")]
     if "--diff-obs0" in sys.argv:
         cmd.append("--diff-obs0")
     print(f"\n>>> {' '.join(cmd[1:])}", flush=True)
