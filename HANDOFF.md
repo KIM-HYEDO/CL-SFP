@@ -596,3 +596,18 @@ w2 곡선 (ep100..700): 0 .01 .29 .44 .42 .51 .47 → diff0 (0 .02 .04 .11 .13 .
 - DAgger 1 round: 이득 없음. 의심 원인 — DP 라벨이 확률적 샘플 1개라 인접 상태에서 mode 가 뒤집힘, 라운드 1 로 데이터 적음, chunk 경계 실패는 chunk 내 교정 불가.
 - **교훈**: tool_hang 의 drift 스케일은 1e-4~1.5e-3 이다. 0.4/0.8 을 주면 DP/학생 모두 0% (dagger.py `--perturbs` 기본값이 이 스케일이라 tool_hang 에선 반드시 `0.0,0.00025,0.0005` 로 지정).
 - `dagger/` (원시 rollout npz + labels, 218M) 는 커밋하지 않음 (.gitignore).
+
+## 폭 ×3 (plain CL-SFP+i, `--cond-interp --width-mult 3`, tag `_interp_w3`, seed0, 1000 ep, 100 eval seeds)
+
+tool_hang 폭 ×1/×3/×4 = .32 / **.48** / .40 (×3 vs ×1: 34/18, p=.036; ×4 vs ×1 p=.24). 다른 태스크는 개선 없음:
+
+| 태스크 | 폭 ×1 (`_interp`) 최고 | 폭 ×3 최고 | 승/패 | p |
+|---|---|---|---|---|
+| lift (`_interp` 없음, cl_sfp 기준) | 1.00 | 1.00 | 포화 | – |
+| can | .96 (ep400) | .96 (ep200) | 3/3 | 1.0 |
+| square | .82 (ep300) | .84 (ep400) | 10/8 | .82 |
+| transport | .37 | .44 (ep200) | 25/18 | .36 |
+| pusht (perturb 평균 13단계) | .674 | .677 | 단계별 모두 n.s. | – |
+
+해석: 폭의 이득은 tool_hang 한정으로 보이고, 나머지는 천장(lift/can)이거나 노이즈 범위. 모두 1 train seed. ckpt 최고값 선택은 낙관적.
+pusht 폭 ×3 결과는 `sweep_s100*.json` (구 `perturb_rand_*`와 파일명만 다름, PUSHT_PERTURB_DIR=random 으로 평가).
